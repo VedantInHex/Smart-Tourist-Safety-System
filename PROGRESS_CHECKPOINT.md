@@ -1,7 +1,7 @@
 # 🛡️ SafeTour AI — Progress Checkpoint
 
 > **Last Updated:** 2026-08-12  
-> **Overall Completion: 87%**  
+> **Overall Completion: 90%**  
 > **App Status:** Backend fully functional (mock DB mode) | Frontend fully functional  
 > **Server:** `http://localhost:5000` | **Client:** `http://localhost:5173`
 
@@ -11,12 +11,12 @@
 
 | Area | Done | Total Items | % |
 |---|---|---|---|
-| Backend / API | 24 | 26 | **92%** |
-| Frontend / UI | 19 | 22 | **86%** |
+| Backend / API | 25 | 26 | **96%** |
+| Frontend / UI | 20 | 22 | **91%** |
 | Core Features (PRD) | 4 | 4 | **100%** |
-| Nice-to-Have Features | 0 | 5 | **0%** |
+| Nice-to-Have Features | 1 | 5 | **20%** |
 | Testing / QA | 3 | 3 | **100%** |
-| **Overall** | **48** | **55** | **~87%** |
+| **Overall** | **49** | **55** | **~90%** |
 
 ---
 
@@ -193,8 +193,8 @@
 
 ### 🟡 Medium Priority (Nice-to-Have from PRD)
 
+- [x] **Admin incident notes** — Text input for admin to add response notes per incident & broadcast to user
 - [ ] **Analytics widget** — Charts showing totals: tourists monitored, alerts triggered, incidents resolved
-- [ ] **Admin incident notes** — Text input for admin to add response notes per incident
 - [ ] **Dark/Light theme toggle** — CSS variable swap with toggle button in nav
 
 ### 🟢 Low Priority (Optional Enhancements)
@@ -234,7 +234,7 @@
 | Analytics Dashboard | ❌ Not built | ❌ No stats endpoint | **Missing** |
 | Multi-language Toggle | ❌ Not built | N/A | **Missing** |
 | Trip Itinerary Upload | ❌ Not built | ❌ No route endpoint | **Missing** |
-| Admin Incident Notes | ❌ Not built | ❌ No notes field | **Missing** |
+| Admin Incident Notes | ✅ Prompt input & note display | ✅ PATCH /incidents/:id/status notes support | **Done** |
 | Theme Toggle | ❌ Not built | N/A | **Missing** |
 
 ---
@@ -260,8 +260,8 @@
 | 2026-08-12 | Added JWT server-side authentication middleware & role-based route protection | ✅ |
 | 2026-08-12 | Added Tourist Incident Tracker panel (frontend UI + GET /api/incidents/my endpoint) | ✅ |
 | 2026-08-12 | Added React ErrorBoundary, form validation, and button loading spinners | ✅ |
+| 2026-08-12 | Added Admin Operational Response Notes to incident dispatch & tourist alert broadcast | ✅ |
 | **Next** | Add analytics widget on admin dashboard | 🔲 |
-| **Next** | Add admin response notes field per incident | 🔲 |
 
 ---
 

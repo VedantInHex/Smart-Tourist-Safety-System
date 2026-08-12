@@ -63,7 +63,7 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
 // Update Incident Status
 router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
   const incidentId = parseInt(req.params.id);
-  const { status } = req.body;
+  const { status, notes } = req.body;
 
   if (!status) {
     return res.status(400).json({ error: "Status field is required." });
@@ -74,9 +74,9 @@ router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
 
     const result = await db.query(
       `UPDATE incidents 
-       SET status = $1, resolved_at = $2 
-       WHERE id = $3 RETURNING *`,
-      [status, resolvedAt, incidentId]
+       SET status = $1, resolved_at = $2, notes = $3
+       WHERE id = $4 RETURNING *`,
+      [status, resolvedAt, notes || null, incidentId]
     );
 
     if (result.rows.length === 0) {
@@ -86,7 +86,7 @@ router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
     const updatedIncident = result.rows[0];
 
     // Create notification alert for user
-    const alertMsg = `Your incident status was updated to: ${status}`;
+    const alertMsg = `Your incident status was updated to: ${status}${notes ? ` — Note: ${notes}` : ''}`;
     await db.query(
       `INSERT INTO alerts (user_id, incident_id, message, sent_at)
        VALUES ($1, $2, $3, $4)`,

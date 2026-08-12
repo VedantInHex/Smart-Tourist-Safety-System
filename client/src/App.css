@@ -928,6 +928,15 @@ body {
 .status-in-progress { background-color: rgba(245, 158, 11, 0.15); color: var(--accent-orange); }
 .status-resolved { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
 
+.incident-note-text {
+  font-size: 0.8rem;
+  color: var(--accent-blue) !important;
+  background: rgba(59, 130, 246, 0.08);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.25rem !important;
+}
+
 .incident-actions {
   display: flex;
   gap: 0.5rem;

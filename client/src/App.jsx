@@ -594,6 +594,7 @@ function TouristDashboard({ user }) {
                     <div className="incident-body">
                       <p><strong>Coordinates:</strong> {inc.latitude.toFixed(5)}, {inc.longitude.toFixed(5)}</p>
                       <p><strong>Status:</strong> <span className={`status-label status-${inc.status.toLowerCase().replace(' ', '-')}`}>{inc.status}</span></p>
+                      {inc.notes && <p className="incident-note-text"><strong>Response Note:</strong> {inc.notes}</p>}
                     </div>
                   </div>
                 ))
@@ -689,8 +690,9 @@ function AdminDashboard({ user }) {
   }, []);
 
   const handleUpdateStatus = async (id, newStatus) => {
+    const notes = window.prompt(`Enter response note for updating status to '${newStatus}' (optional):`);
     try {
-      await API.patch(`/incidents/${id}/status`, { status: newStatus });
+      await API.patch(`/incidents/${id}/status`, { status: newStatus, notes: notes || undefined });
       fetchIncidents();
     } catch (e) {
       console.error(e);
@@ -946,6 +948,7 @@ function AdminDashboard({ user }) {
                       <p><strong>User:</strong> {inc.user_name} ({inc.user_phone})</p>
                       <p><strong>Coordinates:</strong> {inc.latitude.toFixed(5)}, {inc.longitude.toFixed(5)}</p>
                       <p><strong>Status:</strong> <span className={`status-label status-${inc.status.toLowerCase()}`}>{inc.status}</span></p>
+                      {inc.notes && <p className="incident-note-text"><strong>Notes:</strong> {inc.notes}</p>}
                     </div>
                     {inc.status !== 'Resolved' && (
                       <div className="incident-actions">

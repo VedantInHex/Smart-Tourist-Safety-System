@@ -394,11 +394,15 @@ async function mockQuery(sql, params = []) {
   if (cleanSql.startsWith('update incidents')) {
     const status = params[0];
     const resolvedAt = params[1];
-    const id = parseInt(params[2]);
+    const notes = params[2];
+    const id = parseInt(params[3]);
     const idx = localDb.incidents.findIndex(inc => inc.id === id);
     if (idx !== -1) {
       localDb.incidents[idx].status = status;
       localDb.incidents[idx].resolved_at = resolvedAt;
+      if (notes !== undefined) {
+        localDb.incidents[idx].notes = notes;
+      }
       saveLocalDb();
       return { rows: [localDb.incidents[idx]] };
     }
