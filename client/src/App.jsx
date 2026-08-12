@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, Polyline, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import axios from 'axios';
 import { translations } from './translations';
@@ -278,6 +278,11 @@ function TouristDashboard({ user }) {
   const [sosStatus, setSosStatus] = useState(null); // 'sending' | 'active'
   const [geofenceViolation, setGeofenceViolation] = useState(null);
   const [myIncidents, setMyIncidents] = useState([]);
+  const [itinerary, setItinerary] = useState(null);
+  const [showItinModal, setShowItinModal] = useState(false);
+  const [itinTitle, setItinTitle] = useState('Geneva City & Lakeside Safety Route');
+  const [itinStart, setItinStart] = useState('Geneva Central Station');
+  const [itinDest, setItinDest] = useState('Jet d\'Eau Scenic Pier');
 
   // Fetch Digital ID
   useEffect(() => {
@@ -293,7 +298,7 @@ function TouristDashboard({ user }) {
     fetchId();
   }, [user.id]);
 
-  // Fetch Geofences
+  // Fetch Geofences & Itinerary
   useEffect(() => {
     const fetchFences = async () => {
       try {
@@ -303,7 +308,21 @@ function TouristDashboard({ user }) {
         console.error("Failed to load geofences list", e);
       }
     };
+    const fetchItin = async () => {
+      try {
+        const res = await API.get('/itinerary/my');
+        if (res.data) {
+          setItinerary(res.data);
+          if (res.data.title) setItinTitle(res.data.title);
+          if (res.data.start_location) setItinStart(res.data.start_location);
+          if (res.data.destination) setItinDest(res.data.destination);
+        }
+      } catch (e) {
+        console.error("Failed to load itinerary", e);
+      }
+    };
     fetchFences();
+    fetchItin();
   }, []);
 
   // Poll alerts and AI Risk assessment
@@ -429,6 +448,27 @@ function TouristDashboard({ user }) {
     }
   };
 
+  const handleSaveItinerary = async (e) => {
+    e.preventDefault();
+    try {
+      const defaultWaypoints = [
+        [6.1432, 46.2023],
+        [6.1480, 46.2050],
+        [6.1530, 46.2070]
+      ];
+      const res = await API.post('/api/itinerary/create', {
+        title: itinTitle,
+        start_location: itinStart,
+        destination: itinDest,
+        waypoints: defaultWaypoints
+      });
+      setItinerary(res.data.itinerary);
+      setShowItinModal(false);
+    } catch (err) {
+      console.error("Failed to save itinerary:", err);
+    }
+  };
+
   return (
     <div className="dashboard-container" id="tourist-dashboard-page">
       {geofenceViolation && (
@@ -502,6 +542,19 @@ function TouristDashboard({ user }) {
                   </Polygon>
                 );
               })}
+
+              {/* Planned Itinerary Route Polyline */}
+              {itinerary && itinerary.waypoints && (
+                <Polyline
+                  positions={itinerary.waypoints.map(w => [w[1], w[0]])}
+                  pathOptions={{ color: '#06b6d4', weight: 4, dashArray: '6, 8' }}
+                >
+                  <Popup>
+                    <strong>Planned Itinerary Route</strong><br/>
+                    {itinerary.title} ({itinerary.start_location} → {itinerary.destination})
+                  </Popup>
+                </Polyline>
+              )}
             </MapContainer>
           </div>
 
@@ -536,7 +589,54 @@ function TouristDashboard({ user }) {
 
         {/* Right Side: Digital ID, AI Risk, Alerts Feed */}
         <div className="dash-sidebar">
-          {/* Digital ID Panel */}
+          {/* Trip Itinerary Panel */}
+          <div className="dash-card itinerary-card">
+            <div className="card-header">
+              <h3>🗺️ Trip Itinerary Safeguard</h3>
+              <button onClick={() => setShowItinModal(true)} className="btn-sm btn-draw-trigger" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}>
+                ✏️ Edit Itinerary
+              </button>
+            </div>
+            {itinerary ? (
+              <div className="itinerary-content">
+                <p><strong>Title:</strong> {itinerary.title}</p>
+                <p><strong>Start:</strong> {itinerary.start_location}</p>
+                <p><strong>Destination:</strong> {itinerary.destination}</p>
+                <div className="itinerary-route-tag">
+                  <span className="route-dot text-cyan">●</span> Route Waypoints Visualized on Map
+                </div>
+              </div>
+            ) : (
+              <p className="no-alerts">No planned trip itinerary uploaded.</p>
+            )}
+          </div>
+
+          {/* Edit Itinerary Modal */}
+          {showItinModal && (
+            <div className="neon-modal-overlay">
+              <div className="neon-modal card-warning-border animate-pop" style={{ maxWidth: '480px', textAlign: 'left' }}>
+                <h2>Edit Trip Itinerary</h2>
+                <form onSubmit={handleSaveItinerary} className="auth-form" style={{ marginTop: '1rem' }}>
+                  <div className="form-group">
+                    <label>Trip Title</label>
+                    <input type="text" value={itinTitle} onChange={(e) => setItinTitle(e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Start Location</label>
+                    <input type="text" value={itinStart} onChange={(e) => setItinStart(e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Destination</label>
+                    <input type="text" value={itinDest} onChange={(e) => setItinDest(e.target.value)} required />
+                  </div>
+                  <div className="draw-actions" style={{ marginTop: '1rem' }}>
+                    <button type="submit" className="btn-primary">Save Itinerary</button>
+                    <button type="button" className="btn-sm" onClick={() => setShowItinModal(false)}>Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
           {digitalId && (
             <div className="dash-card digital-id-card">
               <div className="card-header">
@@ -662,6 +762,9 @@ function AdminDashboard({ user }) {
   const [qrPayloadInput, setQrPayloadInput] = useState('');
   const [qrVerificationResult, setQrVerificationResult] = useState(null);
 
+  // Inline notes state: { [incidentId]: noteText }
+  const [incidentNotes, setIncidentNotes] = useState({});
+
   const fetchTourists = async () => {
     try {
       const res = await API.get('/location/live');
@@ -704,9 +807,11 @@ function AdminDashboard({ user }) {
   }, []);
 
   const handleUpdateStatus = async (id, newStatus) => {
-    const notes = window.prompt(`Enter response note for updating status to '${newStatus}' (optional):`);
+    const notes = incidentNotes[id] || '';
     try {
       await API.patch(`/incidents/${id}/status`, { status: newStatus, notes: notes || undefined });
+      // Clear the note input after successful update
+      setIncidentNotes(prev => { const n = { ...prev }; delete n[id]; return n; });
       fetchIncidents();
     } catch (e) {
       console.error(e);
@@ -775,6 +880,31 @@ function AdminDashboard({ user }) {
     } finally {
       setIsRestoring(false);
     }
+  };
+
+  const handleExportCsv = () => {
+    if (incidents.length === 0) return alert("No incidents available to export.");
+    const headers = ["ID", "User Name", "Type", "Risk Level", "Latitude", "Longitude", "Status", "Created At", "Resolved At", "Notes"];
+    const rows = incidents.map(i => [
+      i.id,
+      `"${i.user_name || ''}"`,
+      i.type,
+      i.ai_risk_score,
+      i.latitude,
+      i.longitude,
+      i.status,
+      `"${i.created_at || ''}"`,
+      `"${i.resolved_at || ''}"`,
+      `"${(i.notes || '').replace(/"/g, '""')}"`
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `safetour_incidents_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Handle vertex addition inside Geofence Creator
@@ -955,7 +1085,12 @@ function AdminDashboard({ user }) {
         <div className="dash-sidebar">
           {/* Active Incidents Command */}
           <div className="dash-card admin-incidents-card">
-            <h3>Active Incident Dispatch</h3>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>Active Incident Dispatch</h3>
+              <button onClick={handleExportCsv} className="btn-sm" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', cursor: 'pointer', borderRadius: '4px' }}>
+                📊 Export CSV
+              </button>
+            </div>
             <div className="incidents-scroll-box">
               {incidents.length === 0 ? (
                 <p className="no-alerts">No alerts or distress signals reported.</p>
@@ -975,10 +1110,19 @@ function AdminDashboard({ user }) {
                     </div>
                     {inc.status !== 'Resolved' && (
                       <div className="incident-actions">
-                        {inc.status === 'Open' && (
-                          <button className="btn-sm btn-dispatch" onClick={() => handleUpdateStatus(inc.id, 'In Progress')}>Dispatch Response</button>
-                        )}
-                        <button className="btn-sm btn-resolve" onClick={() => handleUpdateStatus(inc.id, 'Resolved')}>Mark Resolved</button>
+                        <textarea
+                          className="incident-note-input"
+                          placeholder="Response note (optional)..."
+                          rows={2}
+                          value={incidentNotes[inc.id] || ''}
+                          onChange={(e) => setIncidentNotes(prev => ({ ...prev, [inc.id]: e.target.value }))}
+                        />
+                        <div className="incident-btns-row">
+                          {inc.status === 'Open' && (
+                            <button className="btn-sm btn-dispatch" onClick={() => handleUpdateStatus(inc.id, 'In Progress')}>Dispatch Response</button>
+                          )}
+                          <button className="btn-sm btn-resolve" onClick={() => handleUpdateStatus(inc.id, 'Resolved')}>Mark Resolved</button>
+                        </div>
                       </div>
                     )}
                   </div>

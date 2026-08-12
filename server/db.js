@@ -12,7 +12,8 @@ let localDb = {
   locations: [],
   risk_zones: [],
   incidents: [],
-  alerts: []
+  alerts: [],
+  itineraries: []
 };
 
 function loadLocalDb() {
@@ -123,6 +124,7 @@ function seedLocalDb() {
     const validUntil = new Date();
     validUntil.setFullYear(validUntil.getFullYear() + 1);
 
+    // Must match calculateHash() in blockchain.js exactly
     const dataStr = JSON.stringify({
       userId: tourist.id,
       name: tourist.name,
@@ -142,6 +144,24 @@ function seedLocalDb() {
       valid_until: validUntil
     };
     localDb.digital_ids.push(block);
+
+    const itinerary = {
+      id: 1,
+      user_id: 2,
+      title: "Geneva City & Lakeside Safety Route",
+      start_location: "Geneva Central Station (Gare Cornavin)",
+      destination: "Jet d'Eau Scenic Pier",
+      waypoints: JSON.stringify([
+        [6.1432, 46.2023],
+        [6.1480, 46.2050],
+        [6.1530, 46.2070]
+      ]),
+      start_date: new Date(),
+      end_date: new Date(Date.now() + 7 * 86400000),
+      created_at: new Date()
+    };
+    if (!localDb.itineraries) localDb.itineraries = [];
+    localDb.itineraries.push(itinerary);
 
     saveLocalDb();
   }
@@ -230,6 +250,18 @@ async function runMigrations() {
       incident_id INTEGER REFERENCES incidents(id) ON DELETE CASCADE,
       message TEXT NOT NULL,
       sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );`,
+    `CREATE TABLE IF NOT EXISTS itineraries (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      title VARCHAR(150) NOT NULL,
+      start_location VARCHAR(150) NOT NULL,
+      destination VARCHAR(150) NOT NULL,
+      waypoints TEXT,
+      start_date TIMESTAMP,
+      end_date TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP
     );`
   ];
 
@@ -270,6 +302,17 @@ async function mockQuery(sql, params = []) {
     return { rows: user ? [{ ...user }] : [] };
   }
 
+  if (cleanSql.includes("select * from users where role")) {
+    const match = cleanSql.match(/role\s*=\s*'([^']+)'/);
+    const role = match ? match[1] : params[0];
+    const filtered = localDb.users.filter(u => u.role === role);
+    return { rows: filtered.map(u => ({ ...u })) };
+  }
+
+  if (cleanSql.includes("select * from users")) {
+    return { rows: localDb.users.map(u => ({ ...u })) };
+  }
+
   if (cleanSql.startsWith('insert into digital_ids')) {
     const newId = {
       id: localDb.digital_ids.length + 1,
@@ -306,6 +349,13 @@ async function mockQuery(sql, params = []) {
     localDb.locations.push(newLoc);
     saveLocalDb();
     return { rows: [newLoc] };
+  }
+
+  if (cleanSql.includes('select * from locations where user_id =')) {
+    const userId = parseInt(params[0]);
+    const userLocs = localDb.locations.filter(l => l.user_id === userId);
+    userLocs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp) || b.id - a.id);
+    return { rows: userLocs.slice(0, 5) };
   }
 
   if (cleanSql.includes('locations') && cleanSql.includes('users') && cleanSql.includes('join')) {
@@ -384,6 +434,8 @@ async function mockQuery(sql, params = []) {
       const u = localDb.users.find(usr => usr.id === inc.user_id);
       return {
         ...inc,
+        user_name: u ? u.name : 'Unknown User',
+        user_phone: u ? u.phone : 'N/A',
         name: u ? u.name : 'Unknown User'
       };
     });
@@ -424,9 +476,58 @@ async function mockQuery(sql, params = []) {
 
   if (cleanSql.includes('select * from alerts where user_id =')) {
     const userId = parseInt(params[0]);
-    const list = localDb.alerts.filter(a => a.user_id === userId);
+    const list = (localDb.alerts || []).filter(a => a.user_id === userId);
     list.sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at) || b.id - a.id);
     return { rows: list };
+  }
+
+  if (!localDb.itineraries) localDb.itineraries = [];
+
+  if (cleanSql.includes('select * from itineraries where user_id =')) {
+    const userId = parseInt(params[0]);
+    const list = localDb.itineraries.filter(i => i.user_id === userId);
+    list.sort((a, b) => b.id - a.id);
+    return { rows: list };
+  }
+
+  if (cleanSql.startsWith('insert into itineraries')) {
+    const newItin = {
+      id: localDb.itineraries.length + 1,
+      user_id: parseInt(params[0]),
+      title: params[1],
+      start_location: params[2],
+      destination: params[3],
+      waypoints: params[4],
+      start_date: params[5],
+      end_date: params[6],
+      created_at: params[7] || new Date(),
+      updated_at: null
+    };
+    localDb.itineraries.push(newItin);
+    saveLocalDb();
+    return { rows: [newItin] };
+  }
+
+  if (cleanSql.startsWith('update itineraries')) {
+    const title = params[0];
+    const start_location = params[1];
+    const destination = params[2];
+    const waypoints = params[3];
+    const start_date = params[4];
+    const end_date = params[5];
+    const updated_at = params[6];
+    const id = parseInt(params[7]);
+
+    const idx = localDb.itineraries.findIndex(i => i.id === id);
+    if (idx !== -1) {
+      localDb.itineraries[idx] = {
+        ...localDb.itineraries[idx],
+        title, start_location, destination, waypoints, start_date, end_date, updated_at
+      };
+      saveLocalDb();
+      return { rows: [localDb.itineraries[idx]] };
+    }
+    return { rows: [] };
   }
 
   console.warn("Mock DB unhandled query:", cleanSql);

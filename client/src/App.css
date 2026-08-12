@@ -1407,3 +1407,57 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Itinerary Safeguard Styling */
+.itinerary-card {
+  border-left: 3px solid #06b6d4;
+}
+
+.itinerary-content p {
+  margin: 0.2rem 0;
+  font-size: 0.85rem;
+}
+
+.itinerary-route-tag {
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px dashed var(--glass-border);
+}
+
+.text-cyan {
+  color: #06b6d4 !important;
+}
+
+.route-dot {
+  font-size: 0.9rem;
+}
+
+.incident-note-input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+  resize: vertical;
+  margin-bottom: 0.4rem;
+  box-sizing: border-box;
+}
+
+.incident-note-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.incident-btns-row {
+  display: flex;
+  gap: 0.5rem;
+}

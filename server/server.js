@@ -17,6 +17,7 @@ const locationRouter = require('./routes/location');
 const geofenceRouter = require('./routes/geofence');
 const incidentsRouter = require('./routes/incidents');
 const aiRouter = require('./routes/ai');
+const itineraryRouter = require('./routes/itinerary');
 
 app.use('/api/auth', authRouter);
 app.use('/api/digital-id', digitalIdRouter);
@@ -24,6 +25,7 @@ app.use('/api/location', locationRouter);
 app.use('/api/geofence', geofenceRouter);
 app.use('/api/incidents', incidentsRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/itinerary', itineraryRouter);
 
 // Health Check
 app.get('/health', (req, res) => {
