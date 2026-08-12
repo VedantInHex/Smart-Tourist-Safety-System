@@ -1,7 +1,7 @@
 # 🛡️ SafeTour AI — Progress Checkpoint
 
 > **Last Updated:** 2026-08-12  
-> **Overall Completion: 78%**  
+> **Overall Completion: 83%**  
 > **App Status:** Backend fully functional (mock DB mode) | Frontend fully functional  
 > **Server:** `http://localhost:5000` | **Client:** `http://localhost:5173`
 
@@ -11,12 +11,12 @@
 
 | Area | Done | Total Items | % |
 |---|---|---|---|
-| Backend / API | 22 | 26 | **85%** |
-| Frontend / UI | 16 | 22 | **73%** |
+| Backend / API | 24 | 26 | **92%** |
+| Frontend / UI | 17 | 22 | **77%** |
 | Core Features (PRD) | 4 | 4 | **100%** |
 | Nice-to-Have Features | 0 | 5 | **0%** |
-| Testing / QA | 1 | 3 | **33%** |
-| **Overall** | **43** | **55** | **~78%** |
+| Testing / QA | 2 | 3 | **66%** |
+| **Overall** | **46** | **55** | **~83%** |
 
 ---
 
@@ -185,8 +185,8 @@
 
 ### 🔴 High Priority (Core Polish)
 
-- [ ] **Add JWT middleware** to protect API routes (security gap — all routes are public)
-- [ ] **Tourist incident status view** — Tourist should see their own incident status in the dashboard
+- [x] **Add JWT middleware** to protect API routes (security gap closed — server validates JWT tokens & roles)
+- [x] **Tourist incident status view** — Tourist can view their own incidents with live status updates
 - [ ] **Loading states** — Add spinner/skeleton during all API fetches
 - [ ] **Error boundaries** — Graceful error handling on map/component failures
 - [ ] **Form validation** — Client-side validation before API calls
@@ -213,7 +213,7 @@
 |---|---|---|---|
 | User Registration | ✅ Register form | ✅ POST /auth/register | **Done** |
 | User Login | ✅ Login form | ✅ POST /auth/login | **Done** |
-| JWT Auth Guard | ✅ Sends token in header | ❌ Not validated server-side | **Partial** |
+| JWT Auth Guard | ✅ Sends token in header | ✅ Verified server-side with JWT middleware | **Done** |
 | Digital Tourist ID | ✅ QR card display | ✅ GET /digital-id/:userId | **Done** |
 | Blockchain Hash Chain | ✅ Audit trigger | ✅ GET /digital-id/chain/verify | **Done** |
 | QR Identity Verification | ✅ Paste & verify terminal | ✅ POST /digital-id/verify | **Done** |
@@ -228,6 +228,7 @@
 | Incident List (Admin) | ✅ Dispatch panel | ✅ GET /incidents | **Done** |
 | Incident Status Update | ✅ Dispatch/Resolve btns | ✅ PATCH /incidents/:id/status | **Done** |
 | Alert Feed (Tourist) | ✅ Scrollable log | ✅ GET /incidents/alerts/:userId | **Done** |
+| Tourist Incident Tracker | ✅ My Incident Tracker card | ✅ GET /incidents/my | **Done** |
 | AI Risk Scoring | ✅ Live risk badge | ✅ GET /ai/risk-score/:userId | **Done** |
 | AI Simulator Controls | ✅ 3 scenario buttons | ✅ Via /location/update | **Done** |
 | Analytics Dashboard | ❌ Not built | ❌ No stats endpoint | **Missing** |
@@ -235,7 +236,6 @@
 | Trip Itinerary Upload | ❌ Not built | ❌ No route endpoint | **Missing** |
 | Admin Incident Notes | ❌ Not built | ❌ No notes field | **Missing** |
 | Theme Toggle | ❌ Not built | N/A | **Missing** |
-| JWT Server Middleware | N/A | ❌ Not implemented | **Missing** |
 
 ---
 
@@ -257,8 +257,8 @@
 | 2026-08-11 | Tourist Dashboard complete — map, geofences, ID card, AI panel, alerts, SOS, simulator | ✅ |
 | 2026-08-11 | Admin Dashboard complete — live map, incident dispatch, geofence draw, blockchain audit | ✅ |
 | 2026-08-12 | Live API tests passed — 10/10 core endpoints verified working | ✅ |
-| **Next** | Add JWT server-side middleware to protect all routes | 🔲 |
-| **Next** | Add tourist incident status view panel | 🔲 |
+| 2026-08-12 | Added JWT server-side authentication middleware & role-based route protection | ✅ |
+| 2026-08-12 | Added Tourist Incident Tracker panel (frontend UI + GET /api/incidents/my endpoint) | ✅ |
 | **Next** | Add loading states and error boundaries | 🔲 |
 | **Next** | Add analytics widget on admin dashboard | 🔲 |
 | **Next** | Add admin notes field per incident | 🔲 |

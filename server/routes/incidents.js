@@ -104,6 +104,20 @@ router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// Fetch incidents for the logged-in tourist
+router.get('/my', requireAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT * FROM incidents WHERE user_id = $1 ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("My Incidents Error:", err);
+    res.status(500).json({ error: "Server query error." });
+  }
+});
+
 // Fetch alerts for a user
 router.get('/alerts/:userId', requireAuth, async (req, res) => {
   const userId = parseInt(req.params.userId);

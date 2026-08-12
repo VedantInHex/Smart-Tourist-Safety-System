@@ -372,6 +372,13 @@ async function mockQuery(sql, params = []) {
     return { rows: [newIncident] };
   }
 
+  if (cleanSql.includes('select * from incidents where user_id =') && !cleanSql.includes('join')) {
+    const userId = parseInt(params[0]);
+    const list = localDb.incidents.filter(inc => inc.user_id === userId);
+    list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at) || b.id - a.id);
+    return { rows: list };
+  }
+
   if (cleanSql.includes('incidents') && cleanSql.includes('users') && cleanSql.includes('join')) {
     const list = localDb.incidents.map(inc => {
       const u = localDb.users.find(usr => usr.id === inc.user_id);

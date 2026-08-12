@@ -241,6 +241,7 @@ function TouristDashboard({ user }) {
   const [aiRisk, setAiRisk] = useState({ riskScore: 'Low', explanation: 'Gathering active GPS updates...' });
   const [sosStatus, setSosStatus] = useState(null); // 'sending' | 'active'
   const [geofenceViolation, setGeofenceViolation] = useState(null);
+  const [myIncidents, setMyIncidents] = useState([]);
 
   // Fetch Digital ID
   useEffect(() => {
@@ -278,6 +279,9 @@ function TouristDashboard({ user }) {
 
         const resAi = await API.get(`/ai/risk-score/${user.id}`);
         setAiRisk(resAi.data);
+
+        const resInc = await API.get('/incidents/my');
+        setMyIncidents(resInc.data);
       } catch (e) {
         console.error("Polling failure:", e);
       }
@@ -548,6 +552,30 @@ function TouristDashboard({ user }) {
               <button onClick={handleResetSimulation} className="btn-sim-action action-reset">
                 🔄 Reset Simulation
               </button>
+            </div>
+          </div>
+
+          {/* My Incidents Tracker Panel */}
+          <div className="dash-card my-incidents-card">
+            <h3>My Incident Tracker</h3>
+            <div className="incidents-scroll-box">
+              {myIncidents.length === 0 ? (
+                <p className="no-alerts">No incidents reported yet.</p>
+              ) : (
+                myIncidents.map(inc => (
+                  <div key={inc.id} className={`incident-item border-${(inc.ai_risk_score || 'low').toLowerCase()} ${inc.status === 'Resolved' ? 'resolved-dim' : ''}`}>
+                    <div className="incident-header">
+                      <span className={`risk-badge-${(inc.ai_risk_score || 'low').toLowerCase()}`}>{inc.ai_risk_score}</span>
+                      <span className="incident-type">{inc.type.toUpperCase()}</span>
+                      <span className="incident-time">{new Date(inc.created_at).toLocaleTimeString()}</span>
+                    </div>
+                    <div className="incident-body">
+                      <p><strong>Coordinates:</strong> {inc.latitude.toFixed(5)}, {inc.longitude.toFixed(5)}</p>
+                      <p><strong>Status:</strong> <span className={`status-label status-${inc.status.toLowerCase().replace(' ', '-')}`}>{inc.status}</span></p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
