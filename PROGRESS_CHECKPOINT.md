@@ -1,7 +1,7 @@
 # 🛡️ SafeTour AI — Progress Checkpoint
 
 > **Last Updated:** 2026-08-12  
-> **Overall Completion: 93%**  
+> **Overall Completion: 95%**  
 > **App Status:** Backend fully functional (mock DB mode) | Frontend fully functional  
 > **Server:** `http://localhost:5000` | **Client:** `http://localhost:5173`
 
@@ -12,11 +12,11 @@
 | Area | Done | Total Items | % |
 |---|---|---|---|
 | Backend / API | 25 | 26 | **96%** |
-| Frontend / UI | 21 | 22 | **95%** |
+| Frontend / UI | 22 | 22 | **100%** |
 | Core Features (PRD) | 4 | 4 | **100%** |
-| Nice-to-Have Features | 2 | 5 | **40%** |
+| Nice-to-Have Features | 3 | 5 | **60%** |
 | Testing / QA | 3 | 3 | **100%** |
-| **Overall** | **51** | **55** | **~93%** |
+| **Overall** | **52** | **55** | **~95%** |
 
 ---
 
@@ -195,7 +195,7 @@
 
 - [x] **Admin incident notes** — Text input for admin to add response notes per incident & broadcast to user
 - [x] **Analytics widget** — Statistics command cards: tourists monitored, active geofences, open SOS, resolution clearance rate
-- [ ] **Dark/Light theme toggle** — CSS variable swap with toggle button in nav
+- [x] **Dark/Light theme toggle** — CSS variable swap with persistent localStorage state & navbar toggle button
 
 ### 🟢 Low Priority (Optional Enhancements)
 
@@ -235,7 +235,7 @@
 | Multi-language Toggle | ❌ Not built | N/A | **Missing** |
 | Trip Itinerary Upload | ❌ Not built | ❌ No route endpoint | **Missing** |
 | Admin Incident Notes | ✅ Prompt input & note display | ✅ PATCH /incidents/:id/status notes support | **Done** |
-| Theme Toggle | ❌ Not built | N/A | **Missing** |
+| Theme Toggle | ✅ Navbar toggle button & persistent storage | N/A | **Done** |
 
 ---
 
@@ -262,7 +262,8 @@
 | 2026-08-12 | Added React ErrorBoundary, form validation, and button loading spinners | ✅ |
 | 2026-08-12 | Added Admin Operational Response Notes to incident dispatch & tourist alert broadcast | ✅ |
 | 2026-08-12 | Added Command Room Analytics Stats Row (Resolution Clearance Rate, SOS Alarms, Active Boundaries) | ✅ |
-| **Next** | Add theme toggle (Dark/Light) | 🔲 |
+| 2026-08-12 | Added Dark/Light theme toggle with persistent localStorage theme state | ✅ |
+| **Next** | Add trip itinerary upload simulation & multi-language toggle | 🔲 |
 
 ---
 

@@ -27,13 +27,16 @@ const createDotMarker = (color, pulse = false) => {
   });
 };
 
-function Navigation({ user, onLogout }) {
+function Navigation({ user, onLogout, theme, onToggleTheme }) {
   return (
     <nav className="navbar" id="app-nav">
       <div className="nav-brand">
         <span className="brand-icon">🛡️</span> SafeTour AI
       </div>
       <div className="nav-profile-section">
+        <button onClick={onToggleTheme} className="btn-sm btn-theme-toggle" title="Toggle Light/Dark Theme" style={{ marginRight: '1rem', cursor: 'pointer' }}>
+          {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+        </button>
         {user ? (
           <div className="nav-user-info">
             <span className="nav-username">{user.name}</span>
@@ -1150,6 +1153,16 @@ class ErrorBoundary extends React.Component {
 
 function App() {
   const [user, setUser] = useState(null);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   // Auto login from localstorage if token exists
   useEffect(() => {
@@ -1174,7 +1187,7 @@ function App() {
   return (
     <Router>
       <div className="app-wrapper">
-        <Navigation user={user} onLogout={handleLogout} />
+        <Navigation user={user} onLogout={handleLogout} theme={theme} onToggleTheme={toggleTheme} />
         <main className="app-content">
           <ErrorBoundary>
             <Routes>

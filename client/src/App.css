@@ -18,6 +18,19 @@
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-input: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #64748b;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-main);
