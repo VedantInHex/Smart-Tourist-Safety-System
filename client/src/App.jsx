@@ -77,11 +77,19 @@ function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setLoading(true);
     try {
       const res = await API.post('/auth/login', { email, password });
       onLoginSuccess(res.data.user, res.data.token);
@@ -92,6 +100,8 @@ function Login({ onLoginSuccess }) {
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid credentials or connection error.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,7 +134,9 @@ function Login({ onLoginSuccess }) {
               required 
             />
           </div>
-          <button type="submit" id="btn-login-submit" className="btn-primary">Sign In</button>
+          <button type="submit" id="btn-login-submit" className="btn-primary" disabled={loading}>
+            {loading ? <span className="spinner-sm"></span> : 'Sign In'}
+          </button>
         </form>
         <p className="auth-footer">
           Don't have an account? <Link to="/register" id="link-goto-register">Create Account</Link>
@@ -147,11 +159,19 @@ function Register({ onLoginSuccess }) {
   const [role, setRole] = useState('tourist');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setLoading(true);
     try {
       const res = await API.post('/auth/register', {
         name,
@@ -170,6 +190,8 @@ function Register({ onLoginSuccess }) {
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1078,6 +1100,42 @@ function AdminDashboard({ user }) {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="auth-container">
+          <div className="auth-card" style={{ textAlign: 'center' }}>
+            <h2 style={{ color: 'var(--accent-red)' }}>⚠️ System Error</h2>
+            <p className="auth-subtitle">Something went wrong while rendering this page.</p>
+            <button 
+              className="btn-primary" 
+              onClick={() => { this.setState({ hasError: false }); window.location.href = '/'; }}
+              style={{ marginTop: '1rem' }}
+            >
+              Return to Home
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   const [user, setUser] = useState(null);
 
@@ -1106,28 +1164,30 @@ function App() {
       <div className="app-wrapper">
         <Navigation user={user} onLogout={handleLogout} />
         <main className="app-content">
-          <Routes>
-            <Route 
-              path="/login" 
-              element={user ? <Navigate to={user.role === 'admin' ? '/admin-dashboard' : '/tourist-dashboard'} replace /> : <Login onLoginSuccess={handleLoginSuccess} />} 
-            />
-            <Route 
-              path="/register" 
-              element={user ? <Navigate to={user.role === 'admin' ? '/admin-dashboard' : '/tourist-dashboard'} replace /> : <Register onLoginSuccess={handleLoginSuccess} />} 
-            />
-            <Route 
-              path="/tourist-dashboard" 
-              element={user && user.role === 'tourist' ? <TouristDashboard user={user} /> : <Navigate to="/login" replace />} 
-            />
-            <Route 
-              path="/admin-dashboard" 
-              element={user && user.role === 'admin' ? <AdminDashboard user={user} /> : <Navigate to="/login" replace />} 
-            />
-            <Route 
-              path="/" 
-              element={<Navigate to="/login" replace />} 
-            />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route 
+                path="/login" 
+                element={user ? <Navigate to={user.role === 'admin' ? '/admin-dashboard' : '/tourist-dashboard'} replace /> : <Login onLoginSuccess={handleLoginSuccess} />} 
+              />
+              <Route 
+                path="/register" 
+                element={user ? <Navigate to={user.role === 'admin' ? '/admin-dashboard' : '/tourist-dashboard'} replace /> : <Register onLoginSuccess={handleLoginSuccess} />} 
+              />
+              <Route 
+                path="/tourist-dashboard" 
+                element={user && user.role === 'tourist' ? <TouristDashboard user={user} /> : <Navigate to="/login" replace />} 
+              />
+              <Route 
+                path="/admin-dashboard" 
+                element={user && user.role === 'admin' ? <AdminDashboard user={user} /> : <Navigate to="/login" replace />} 
+              />
+              <Route 
+                path="/" 
+                element={<Navigate to="/login" replace />} 
+              />
+            </Routes>
+          </ErrorBoundary>
         </main>
       </div>
     </Router>

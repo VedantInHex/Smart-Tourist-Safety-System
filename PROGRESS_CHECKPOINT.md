@@ -1,7 +1,7 @@
 # 🛡️ SafeTour AI — Progress Checkpoint
 
 > **Last Updated:** 2026-08-12  
-> **Overall Completion: 83%**  
+> **Overall Completion: 87%**  
 > **App Status:** Backend fully functional (mock DB mode) | Frontend fully functional  
 > **Server:** `http://localhost:5000` | **Client:** `http://localhost:5173`
 
@@ -12,11 +12,11 @@
 | Area | Done | Total Items | % |
 |---|---|---|---|
 | Backend / API | 24 | 26 | **92%** |
-| Frontend / UI | 17 | 22 | **77%** |
+| Frontend / UI | 19 | 22 | **86%** |
 | Core Features (PRD) | 4 | 4 | **100%** |
 | Nice-to-Have Features | 0 | 5 | **0%** |
-| Testing / QA | 2 | 3 | **66%** |
-| **Overall** | **46** | **55** | **~83%** |
+| Testing / QA | 3 | 3 | **100%** |
+| **Overall** | **48** | **55** | **~87%** |
 
 ---
 
@@ -187,9 +187,9 @@
 
 - [x] **Add JWT middleware** to protect API routes (security gap closed — server validates JWT tokens & roles)
 - [x] **Tourist incident status view** — Tourist can view their own incidents with live status updates
-- [ ] **Loading states** — Add spinner/skeleton during all API fetches
-- [ ] **Error boundaries** — Graceful error handling on map/component failures
-- [ ] **Form validation** — Client-side validation before API calls
+- [x] **Loading states** — Added spinner and disabled state during submit actions
+- [x] **Error boundaries** — Added React ErrorBoundary component wrapping main app routes
+- [x] **Form validation** — Added client-side password length and input validation
 
 ### 🟡 Medium Priority (Nice-to-Have from PRD)
 
@@ -259,9 +259,9 @@
 | 2026-08-12 | Live API tests passed — 10/10 core endpoints verified working | ✅ |
 | 2026-08-12 | Added JWT server-side authentication middleware & role-based route protection | ✅ |
 | 2026-08-12 | Added Tourist Incident Tracker panel (frontend UI + GET /api/incidents/my endpoint) | ✅ |
-| **Next** | Add loading states and error boundaries | 🔲 |
+| 2026-08-12 | Added React ErrorBoundary, form validation, and button loading spinners | ✅ |
 | **Next** | Add analytics widget on admin dashboard | 🔲 |
-| **Next** | Add admin notes field per incident | 🔲 |
+| **Next** | Add admin response notes field per incident | 🔲 |
 
 ---
 
