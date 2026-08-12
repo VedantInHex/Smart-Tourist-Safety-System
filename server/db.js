@@ -344,6 +344,17 @@ async function mockQuery(sql, params = []) {
     return { rows: localDb.risk_zones };
   }
 
+  if (cleanSql.startsWith('delete from risk_zones')) {
+    const id = parseInt(params[0]);
+    const idx = localDb.risk_zones.findIndex(z => z.id === id);
+    if (idx !== -1) {
+      localDb.risk_zones.splice(idx, 1);
+      saveLocalDb();
+      return { rows: [{ id }] };
+    }
+    return { rows: [] };
+  }
+
   if (cleanSql.startsWith('insert into incidents')) {
     const newIncident = {
       id: localDb.incidents.length + 1,
@@ -419,9 +430,46 @@ async function query(sqlText, params = []) {
   }
 }
 
+let originalUserData = {};
+
+async function tamperUser(userId) {
+  if (usePostgres) {
+    const res = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (res.rows.length > 0) {
+      const user = res.rows[0];
+      originalUserData[userId] = { name: user.name, id_proof_number: user.id_proof_number };
+      await pool.query("UPDATE users SET name = $1, id_proof_number = $2 WHERE id = $3", [user.name + " (Tampered)", "COMPROMISED-999", userId]);
+    }
+  } else {
+    const user = localDb.users.find(u => u.id === userId);
+    if (user) {
+      originalUserData[userId] = { name: user.name, id_proof_number: user.id_proof_number };
+      user.name = user.name + " (Tampered)";
+      user.id_proof_number = "COMPROMISED-999";
+      saveLocalDb();
+    }
+  }
+}
+
+async function restoreUser(userId) {
+  const original = originalUserData[userId] || { name: "Marcus Aurelius", id_proof_number: "PASSPORT-XM889" };
+  if (usePostgres) {
+    await pool.query("UPDATE users SET name = $1, id_proof_number = $2 WHERE id = $3", [original.name, original.id_proof_number, userId]);
+  } else {
+    const user = localDb.users.find(u => u.id === userId);
+    if (user) {
+      user.name = original.name;
+      user.id_proof_number = original.id_proof_number;
+      saveLocalDb();
+    }
+  }
+}
+
 module.exports = {
   initDb,
   query,
   isPostgres: () => usePostgres,
-  localDb
+  localDb,
+  tamperUser,
+  restoreUser
 };

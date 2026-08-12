@@ -1,0 +1,15 @@
+{
+  "name": "tourist-safety-system",
+  "version": "1.0.0",
+  "description": "Smart Tourist Safety Monitoring & Incident Response System",
+  "scripts": {
+    "install:server": "npm install --prefix server",
+    "install:client": "npm install --prefix client",
+    "install:all": "npm run install:server && npm run install:client",
+    "build": "npm run build --prefix client",
+    "start": "npm run dev --prefix server",
+    "start:prod": "node server/server.js",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client"
+  }
+}

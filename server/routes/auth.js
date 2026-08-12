@@ -156,4 +156,29 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Test endpoint to simulate DB Tampering
+router.post('/test/tamper', async (req, res) => {
+  const userId = req.body.userId || 2; // Default to Marcus
+  try {
+    await db.tamperUser(userId);
+    res.status(200).json({ message: `Successfully simulated DB tampering for user ID ${userId}.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to tamper user." });
+  }
+});
+
+// Test endpoint to restore DB integrity
+router.post('/test/restore', async (req, res) => {
+  const userId = req.body.userId || 2; // Default to Marcus
+  try {
+    await db.restoreUser(userId);
+    res.status(200).json({ message: `Successfully restored database integrity for user ID ${userId}.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to restore user." });
+  }
+});
+
 module.exports = router;
+

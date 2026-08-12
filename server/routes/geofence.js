@@ -55,4 +55,28 @@ router.get('/list', async (req, res) => {
   }
 });
 
+// Delete a Geofence
+router.delete('/:id', async (req, res) => {
+  const geofenceId = parseInt(req.params.id);
+
+  try {
+    const result = await db.query('DELETE FROM risk_zones WHERE id = $1 RETURNING *', [geofenceId]);
+
+    // Handle return value for mock db or real db
+    if (result.rows.length === 0) {
+      // For mock db delete, if it was not found, return error, but if it was deleted, it returns the id
+      return res.status(404).json({ error: "Geofence not found." });
+    }
+
+    res.status(200).json({
+      message: "Geofence deleted successfully",
+      geofence: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error("Delete Geofence Error:", err);
+    res.status(500).json({ error: "Server database delete error." });
+  }
+});
+
 module.exports = router;

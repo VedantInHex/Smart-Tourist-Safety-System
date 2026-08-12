@@ -30,6 +30,22 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', database: db.isPostgres() ? 'postgresql' : 'simulated-fallback' });
 });
 
+// Serve client static assets if production build exists
+const path = require('path');
+const fs = require('fs');
+const clientDistPath = path.join(__dirname, '../client/dist');
+if (fs.existsSync(clientDistPath)) {
+  console.log(`Serving static client files from: ${clientDistPath}`);
+  app.use(express.static(clientDistPath));
+  app.get('/*splat', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
+
+
 // Initialize DB and Start Server
 async function startServer() {
   await db.initDb();

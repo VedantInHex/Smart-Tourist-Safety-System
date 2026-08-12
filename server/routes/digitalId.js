@@ -64,4 +64,89 @@ router.get('/chain/verify', async (req, res) => {
   }
 });
 
+const { calculateHash } = require('../blockchain');
+
+// Verify single Digital ID QR payload
+router.post('/verify', async (req, res) => {
+  const { userId, hash } = req.body;
+
+  if (!userId || !hash) {
+    return res.status(400).json({ error: "Missing required verification fields: userId and hash." });
+  }
+
+  try {
+    // 1. Fetch user from DB
+    const userResult = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(200).json({
+        verified: false,
+        error: `User not found in system directory.`
+      });
+    }
+    const user = userResult.rows[0];
+
+    // 2. Fetch block from DB
+    const blockResult = await db.query('SELECT * FROM digital_ids WHERE user_id = $1', [userId]);
+    if (blockResult.rows.length === 0) {
+      return res.status(200).json({
+        verified: false,
+        error: `No Digital ID block registered for this user.`
+      });
+    }
+    const block = blockResult.rows[0];
+
+    // 3. Check QR hash against stored DB block hash
+    if (block.id_hash !== hash) {
+      return res.status(200).json({
+        verified: false,
+        error: `Tamper Warning: The QR ID hash does not match the blockchain registry.`,
+        storedHash: block.id_hash,
+        providedHash: hash
+      });
+    }
+
+    // 4. Recalculate block hash to check database record integrity
+    const recalculated = calculateHash(
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        id_proof_number: user.id_proof_number
+      },
+      block.issued_at,
+      block.valid_until,
+      block.previous_hash
+    );
+
+    if (block.id_hash !== recalculated) {
+      return res.status(200).json({
+        verified: false,
+        error: `Database Integrity Failure: The stored user details do not match the blockchain signature. (DB Tampered)`,
+        storedHash: block.id_hash,
+        recalculatedHash: recalculated
+      });
+    }
+
+    // 5. Successful validation
+    res.status(200).json({
+      verified: true,
+      message: "Digital ID successfully authenticated.",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        id_proof_number: user.id_proof_number,
+        emergency_contact: user.emergency_contact
+      },
+      valid_until: block.valid_until
+    });
+
+  } catch (err) {
+    console.error("Single Verify Error:", err);
+    res.status(500).json({ error: "Server verification processing error." });
+  }
+});
+
 module.exports = router;
+

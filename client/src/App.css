@@ -1131,3 +1131,243 @@ body {
   50% { opacity: 1; }
   100% { opacity: 0.5; }
 }
+
+/* AI Safety Simulator Panel Styles */
+.simulation-panel-card {
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.sim-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-sim-action {
+  background-color: var(--bg-tertiary);
+  color: var(--text-main);
+  border: 1px solid var(--glass-border);
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-sim-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.action-immobility:hover {
+  border-color: var(--accent-orange);
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--accent-orange);
+}
+
+.action-signalloss:hover {
+  border-color: var(--accent-red);
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--accent-red);
+}
+
+.action-reset:hover {
+  border-color: var(--accent-green);
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--accent-green);
+}
+
+/* Authority Verification Terminal Styles */
+.qr-verification-card {
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.verification-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.qr-textarea {
+  background-color: var(--bg-input);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  resize: vertical;
+  outline: none;
+}
+
+.qr-textarea:focus {
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+}
+
+.btn-verify-qr {
+  padding: 0.65rem;
+  font-size: 0.85rem;
+}
+
+.verification-result {
+  margin-top: 0.5rem;
+}
+
+.result-alert {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.result-success {
+  background-color: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #a7f3d0;
+}
+
+.result-danger {
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+.result-alert h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.result-alert p {
+  margin: 0.25rem 0 0 0;
+  line-height: 1.45;
+}
+
+.signature-code {
+  display: block;
+  margin-top: 0.5rem;
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Database attack simulator buttons in blockchain audit */
+.tamper-simulation-controls {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.control-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.control-buttons button {
+  flex: 1;
+  padding: 0.45rem;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.btn-tamper-db {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--accent-red);
+}
+
+.btn-tamper-db:hover {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border-color: var(--accent-red);
+}
+
+.btn-repair-db {
+  border-color: rgba(16, 185, 129, 0.3);
+  color: var(--accent-green);
+}
+
+.btn-repair-db:hover {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  border-color: var(--accent-green);
+}
+
+/* Geofence Registry Table Styles */
+.geofence-registry-card {
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.registry-list-box {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.registry-list-box::-webkit-scrollbar {
+  width: 5px;
+}
+
+.registry-list-box::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+}
+
+.geofence-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.geofence-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--glass-border);
+  letter-spacing: 0.05em;
+}
+
+.geofence-table td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.btn-delete-gf {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: var(--accent-red);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.btn-delete-gf:hover {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border-color: var(--accent-red);
+}

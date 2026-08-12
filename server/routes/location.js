@@ -43,18 +43,20 @@ function checkGeofence(lat, lng, polygonGeoJSON) {
 
 // Update Tourist Location & Check Geofences
 router.post('/update', async (req, res) => {
-  const { user_id, latitude, longitude } = req.body;
+  const { user_id, latitude, longitude, timestamp } = req.body;
 
   if (!user_id || latitude === undefined || longitude === undefined) {
     return res.status(400).json({ error: "Missing required fields: user_id, latitude, longitude" });
   }
 
   try {
+    const locTimestamp = timestamp ? new Date(timestamp) : new Date();
+
     // 1. Save new location
     const insertLoc = await db.query(
       `INSERT INTO locations (user_id, latitude, longitude, timestamp)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [user_id, latitude, longitude, new Date()]
+      [user_id, latitude, longitude, locTimestamp]
     );
 
     // 2. Fetch all defined risk zones to run geofencing

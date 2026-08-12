@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -325,6 +325,70 @@ function TouristDashboard({ user }) {
     }
   };
 
+  const handleSimulateImmobility = async () => {
+    try {
+      for (let i = 0; i < 3; i++) {
+        await API.post('/location/update', {
+          user_id: user.id,
+          latitude: lat,
+          longitude: lng
+        });
+      }
+      const resAi = await API.get(`/ai/risk-score/${user.id}`);
+      setAiRisk(resAi.data);
+    } catch (err) {
+      console.error("Immobility simulation error", err);
+    }
+  };
+
+  const handleSimulateSignalLoss = async () => {
+    const hazardLat = 46.208;
+    const hazardLng = 6.153;
+    const pastTime = new Date(Date.now() - 6 * 60 * 1000).toISOString();
+    
+    setLat(hazardLat);
+    setLng(hazardLng);
+
+    try {
+      const res = await API.post('/location/update', {
+        user_id: user.id,
+        latitude: hazardLat,
+        longitude: hazardLng,
+        timestamp: pastTime
+      });
+      
+      if (res.data.triggeredGeofences && res.data.triggeredGeofences.length > 0) {
+        setGeofenceViolation(res.data.triggeredGeofences[0]);
+      }
+      
+      const resAi = await API.get(`/ai/risk-score/${user.id}`);
+      setAiRisk(resAi.data);
+    } catch (err) {
+      console.error("Signal loss simulation error", err);
+    }
+  };
+
+  const handleResetSimulation = async () => {
+    const normalLat = 46.2023;
+    const normalLng = 6.1432;
+    setLat(normalLat);
+    setLng(normalLng);
+    setGeofenceViolation(null);
+
+    try {
+      await API.post('/location/update', {
+        user_id: user.id,
+        latitude: normalLat,
+        longitude: normalLng
+      });
+      
+      const resAi = await API.get(`/ai/risk-score/${user.id}`);
+      setAiRisk(resAi.data);
+    } catch (err) {
+      console.error("Reset simulation error", err);
+    }
+  };
+
   return (
     <div className="dashboard-container" id="tourist-dashboard-page">
       {geofenceViolation && (
@@ -470,6 +534,23 @@ function TouristDashboard({ user }) {
             </div>
           </div>
 
+          {/* AI Safety Simulator Panel */}
+          <div className="dash-card simulation-panel-card">
+            <h3>AI Safety Simulator</h3>
+            <p className="sim-helper">Instantly trigger location anomalies for the demo.</p>
+            <div className="sim-actions-list">
+              <button onClick={handleSimulateImmobility} className="btn-sim-action action-immobility">
+                🚶‍♂️ Simulate Immobility
+              </button>
+              <button onClick={handleSimulateSignalLoss} className="btn-sim-action action-signalloss">
+                📡 Simulate Signal Loss
+              </button>
+              <button onClick={handleResetSimulation} className="btn-sim-action action-reset">
+                🔄 Reset Simulation
+              </button>
+            </div>
+          </div>
+
           {/* Alerts Feed Panel */}
           <div className="dash-card alerts-feed-card">
             <h3>Incident Logs & Broadcasts</h3>
@@ -509,6 +590,12 @@ function AdminDashboard({ user }) {
   // Ledger Verification State
   const [verificationLog, setVerificationLog] = useState(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isTampering, setIsTampering] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+
+  // Authority Verification State
+  const [qrPayloadInput, setQrPayloadInput] = useState('');
+  const [qrVerificationResult, setQrVerificationResult] = useState(null);
 
   const fetchTourists = async () => {
     try {
@@ -560,6 +647,17 @@ function AdminDashboard({ user }) {
     }
   };
 
+  const handleDeleteGeofence = async (id) => {
+    if (window.confirm("Are you sure you want to delete this geofence boundary?")) {
+      try {
+        await API.delete(`/geofence/${id}`);
+        fetchFences();
+      } catch (err) {
+        console.error("Failed to delete geofence", err);
+      }
+    }
+  };
+
   const verifyLedger = async () => {
     setIsVerifying(true);
     setVerificationLog(null);
@@ -570,6 +668,46 @@ function AdminDashboard({ user }) {
       console.error(e);
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const handleVerifyQrCode = async () => {
+    setQrVerificationResult(null);
+    try {
+      const parsed = JSON.parse(qrPayloadInput);
+      const res = await API.post('/digital-id/verify', parsed);
+      setQrVerificationResult(res.data);
+    } catch {
+      setQrVerificationResult({
+        verified: false,
+        error: "Invalid QR code payload format. Must be a valid JSON object."
+      });
+    }
+  };
+
+  const handleTamperDatabase = async () => {
+    setIsTampering(true);
+    try {
+      await API.post('/auth/test/tamper', { userId: 2 });
+      alert("Database tampered! Tourist Marcus Aurelius's record has been altered in the database. Perform Audit to see validation error.");
+      setVerificationLog(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsTampering(false);
+    }
+  };
+
+  const handleRestoreDatabase = async () => {
+    setIsRestoring(true);
+    try {
+      await API.post('/auth/test/restore', { userId: 2 });
+      alert("Database restored to authentic state. Perform Audit to verify ledger integrity.");
+      setVerificationLog(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -774,6 +912,50 @@ function AdminDashboard({ user }) {
           </div>
 
           {/* Blockchain integrity checking */}
+          {/* Authority Verification Terminal */}
+          <div className="dash-card qr-verification-card">
+            <h3>Authority Verification Terminal</h3>
+            <p className="sim-helper">Paste QR payload to verify identity signature.</p>
+            <div className="verification-form">
+              <textarea 
+                rows="2" 
+                placeholder='Paste QR Code JSON payload here...' 
+                value={qrPayloadInput} 
+                onChange={(e) => setQrPayloadInput(e.target.value)}
+                className="qr-textarea"
+              />
+              <button onClick={handleVerifyQrCode} className="btn-primary btn-verify-qr">
+                Verify QR Signature
+              </button>
+            </div>
+            {qrVerificationResult && (
+              <div className="verification-result animate-pop">
+                {qrVerificationResult.verified ? (
+                  <div className="result-alert result-success">
+                    <span className="badge-icon">✅</span>
+                    <div>
+                      <h4>AUTHENTIC DIGITAL ID</h4>
+                      <p><strong>Name:</strong> {qrVerificationResult.user.name}</p>
+                      <p><strong>Passport/NID:</strong> {qrVerificationResult.user.id_proof_number}</p>
+                      <p><strong>Status:</strong> Valid until {new Date(qrVerificationResult.valid_until).toLocaleDateString()}</p>
+                      <code className="signature-code">Sig status: SECURE</code>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="result-alert result-danger">
+                    <span className="badge-icon">❌</span>
+                    <div>
+                      <h4>VERIFICATION FAILED</h4>
+                      <p className="error-text">{qrVerificationResult.error}</p>
+                      <code className="signature-code">Sig status: COMPROMISED</code>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Ledger Cryptographic Audit */}
           <div className="dash-card blockchain-card">
             <div className="card-header">
               <h3>Ledger Cryptographic Audit</h3>
@@ -810,6 +992,57 @@ function AdminDashboard({ user }) {
             ) : (
               <p className="no-alerts">Verify simulated cryptographic identity chains stored in SQL database.</p>
             )}
+
+            <div className="tamper-simulation-controls">
+              <span className="control-label">Demo Attack Simulator:</span>
+              <div className="control-buttons">
+                <button 
+                  onClick={handleTamperDatabase} 
+                  className="btn-sm btn-tamper-db" 
+                  disabled={isTampering}
+                >
+                  {isTampering ? 'Altering...' : '💥 Tamper DB'}
+                </button>
+                <button 
+                  onClick={handleRestoreDatabase} 
+                  className="btn-sm btn-repair-db" 
+                  disabled={isRestoring}
+                >
+                  {isRestoring ? 'Restoring...' : '🔧 Repair DB'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Geofence Boundary Registry */}
+          <div className="dash-card geofence-registry-card">
+            <h3>Geofence Boundary Registry</h3>
+            <div className="registry-list-box">
+              {geofences.length === 0 ? (
+                <p className="no-alerts">No geofences defined.</p>
+              ) : (
+                <table className="geofence-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Risk</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {geofences.map(gf => (
+                      <tr key={gf.id}>
+                        <td><strong>{gf.name}</strong></td>
+                        <td><span className={`risk-badge-${gf.risk_level.toLowerCase()}`}>{gf.risk_level}</span></td>
+                        <td>
+                          <button onClick={() => handleDeleteGeofence(gf.id)} className="btn-sm btn-delete-gf">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
       </div>
