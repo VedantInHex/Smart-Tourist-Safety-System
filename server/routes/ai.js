@@ -1,8 +1,14 @@
 const router = require('express').Router();
 const db = require('../db');
+const { requireAuth } = require('../middleware/auth');
 
-router.get('/risk-score/:userId', async (req, res) => {
+router.get('/risk-score/:userId', requireAuth, async (req, res) => {
   const userId = parseInt(req.params.userId);
+
+  // Ensure tourists can only view their own risk score
+  if (req.user.role !== 'admin' && req.user.id !== userId) {
+    return res.status(403).json({ error: "Access denied. Can only view your own risk score." });
+  }
 
   try {
     const locResult = await db.query(

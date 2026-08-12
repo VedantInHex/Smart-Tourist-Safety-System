@@ -244,7 +244,7 @@ async function mockQuery(sql, params = []) {
   if (cleanSql.includes('select * from users where email =')) {
     const email = params[0];
     const user = localDb.users.find(u => u.email === email);
-    return { rows: user ? [user] : [] };
+    return { rows: user ? [{ ...user }] : [] };
   }
 
   if (cleanSql.startsWith('insert into users')) {
@@ -261,13 +261,13 @@ async function mockQuery(sql, params = []) {
     };
     localDb.users.push(newUser);
     saveLocalDb();
-    return { rows: [newUser] };
+    return { rows: [{ ...newUser }] };
   }
 
   if (cleanSql.includes('select * from users where id =')) {
     const id = parseInt(params[0]);
     const user = localDb.users.find(u => u.id === id);
-    return { rows: user ? [user] : [] };
+    return { rows: user ? [{ ...user }] : [] };
   }
 
   if (cleanSql.startsWith('insert into digital_ids')) {

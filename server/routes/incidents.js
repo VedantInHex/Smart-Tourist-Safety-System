@@ -1,12 +1,18 @@
 const router = require('express').Router();
 const db = require('../db');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 // Create SOS Incident
-router.post('/sos', async (req, res) => {
+router.post('/sos', requireAuth, async (req, res) => {
   const { user_id, latitude, longitude } = req.body;
 
   if (!user_id || latitude === undefined || longitude === undefined) {
     return res.status(400).json({ error: "Missing required fields: user_id, latitude, longitude" });
+  }
+
+  // Ensure tourists can only raise SOS for themselves
+  if (req.user.role !== 'admin' && req.user.id !== parseInt(user_id)) {
+    return res.status(403).json({ error: "Access denied. Can only trigger SOS for yourself." });
   }
 
   try {
@@ -39,7 +45,7 @@ router.post('/sos', async (req, res) => {
 });
 
 // List all Incidents
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, requireAdmin, async (req, res) => {
   try {
     const result = await db.query(
       `SELECT i.*, u.name as user_name, u.phone as user_phone
@@ -55,7 +61,7 @@ router.get('/', async (req, res) => {
 });
 
 // Update Incident Status
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
   const incidentId = parseInt(req.params.id);
   const { status } = req.body;
 
@@ -99,8 +105,13 @@ router.patch('/:id/status', async (req, res) => {
 });
 
 // Fetch alerts for a user
-router.get('/alerts/:userId', async (req, res) => {
+router.get('/alerts/:userId', requireAuth, async (req, res) => {
   const userId = parseInt(req.params.userId);
+
+  // Ensure tourists can only view their own alerts
+  if (req.user.role !== 'admin' && req.user.id !== userId) {
+    return res.status(403).json({ error: "Access denied. Can only view your own alerts." });
+  }
   try {
     const result = await db.query(
       `SELECT * FROM alerts WHERE user_id = $1 ORDER BY sent_at DESC`,

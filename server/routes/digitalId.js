@@ -2,10 +2,15 @@ const router = require('express').Router();
 const db = require('../db');
 const QRCode = require('qrcode');
 const { verifyChain } = require('../blockchain');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 // Get Digital ID details
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', requireAuth, async (req, res) => {
   const userId = parseInt(req.params.userId);
+
+  if (req.user.role !== 'admin' && req.user.id !== userId) {
+    return res.status(403).json({ error: "Access denied. Can only view your own Digital ID." });
+  }
 
   try {
     const userResult = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
@@ -44,7 +49,7 @@ router.get('/:userId', async (req, res) => {
 });
 
 // Verify Blockchain integrity
-router.get('/chain/verify', async (req, res) => {
+router.get('/chain/verify', requireAuth, requireAdmin, async (req, res) => {
   try {
     // Select all blocks ordered by id
     const blocksResult = await db.query('SELECT * FROM digital_ids ORDER BY id ASC');
@@ -67,7 +72,7 @@ router.get('/chain/verify', async (req, res) => {
 const { calculateHash } = require('../blockchain');
 
 // Verify single Digital ID QR payload
-router.post('/verify', async (req, res) => {
+router.post('/verify', requireAuth, requireAdmin, async (req, res) => {
   const { userId, hash } = req.body;
 
   if (!userId || !hash) {

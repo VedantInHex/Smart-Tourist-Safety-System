@@ -1,8 +1,9 @@
 const router = require('express').Router();
 const db = require('../db');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 // Create a new Geofence Risk Zone
-router.post('/create', async (req, res) => {
+router.post('/create', requireAuth, requireAdmin, async (req, res) => {
   const { name, polygon_geojson, risk_level, created_by } = req.body;
 
   if (!name || !polygon_geojson || !risk_level) {
@@ -33,7 +34,7 @@ router.post('/create', async (req, res) => {
 });
 
 // List all Geofences
-router.get('/list', async (req, res) => {
+router.get('/list', requireAuth, async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM risk_zones');
     const list = result.rows.map(zone => {
@@ -56,7 +57,7 @@ router.get('/list', async (req, res) => {
 });
 
 // Delete a Geofence
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   const geofenceId = parseInt(req.params.id);
 
   try {

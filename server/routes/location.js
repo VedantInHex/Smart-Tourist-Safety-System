@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const db = require('../db');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 // Ray-casting Point-in-Polygon algorithm
 function isPointInPolygon(point, polygonCoordinates) {
@@ -42,11 +43,16 @@ function checkGeofence(lat, lng, polygonGeoJSON) {
 }
 
 // Update Tourist Location & Check Geofences
-router.post('/update', async (req, res) => {
+router.post('/update', requireAuth, async (req, res) => {
   const { user_id, latitude, longitude, timestamp } = req.body;
 
   if (!user_id || latitude === undefined || longitude === undefined) {
     return res.status(400).json({ error: "Missing required fields: user_id, latitude, longitude" });
+  }
+
+  // Enforce that tourists can only update their own location
+  if (req.user.role !== 'admin' && req.user.id !== parseInt(user_id)) {
+    return res.status(403).json({ error: "Access denied. Can only update your own location." });
   }
 
   try {
@@ -119,7 +125,7 @@ router.post('/update', async (req, res) => {
 });
 
 // Get Live Locations of all active tourists
-router.get('/live', async (req, res) => {
+router.get('/live', requireAuth, requireAdmin, async (req, res) => {
   try {
     // SQL for getting latest location per user (only tourists)
     // If Postgres is active, we can run a DISTINCT ON or Window function:
