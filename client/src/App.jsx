@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } f
 import { MapContainer, TileLayer, Marker, Popup, Polygon, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import axios from 'axios';
+import { translations } from './translations';
 import './App.css';
 
 // Base API config
@@ -27,26 +28,36 @@ const createDotMarker = (color, pulse = false) => {
   });
 };
 
-function Navigation({ user, onLogout, theme, onToggleTheme }) {
+function Navigation({ user, onLogout, theme, onToggleTheme, lang, onChangeLang }) {
   return (
     <nav className="navbar" id="app-nav">
       <div className="nav-brand">
-        <span className="brand-icon">🛡️</span> SafeTour AI
+        <span className="brand-icon">🛡️</span> {translations[lang]?.brand || 'SafeTour AI'}
       </div>
       <div className="nav-profile-section">
+        <select 
+          value={lang} 
+          onChange={(e) => onChangeLang(e.target.value)}
+          className="lang-select" 
+          style={{ marginRight: '0.75rem', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--glass-border)', padding: '0.25rem 0.5rem', borderRadius: '6px', fontSize: '0.8rem' }}
+        >
+          <option value="en">🇺🇸 EN</option>
+          <option value="fr">🇫🇷 FR</option>
+          <option value="es">🇪🇸 ES</option>
+        </select>
         <button onClick={onToggleTheme} className="btn-sm btn-theme-toggle" title="Toggle Light/Dark Theme" style={{ marginRight: '1rem', cursor: 'pointer' }}>
-          {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          {theme === 'dark' ? `☀️ ${translations[lang]?.lightTheme || 'Light Mode'}` : `🌙 ${translations[lang]?.darkTheme || 'Dark Mode'}`}
         </button>
         {user ? (
           <div className="nav-user-info">
             <span className="nav-username">{user.name}</span>
             <span className={`nav-role-badge role-${user.role}`}>{user.role}</span>
-            <button onClick={onLogout} className="btn-logout" id="btn-logout">Logout</button>
+            <button onClick={onLogout} className="btn-logout" id="btn-logout">{translations[lang]?.logout || 'Logout'}</button>
           </div>
         ) : (
           <div className="nav-links">
-            <Link to="/login" id="nav-login" className="nav-link">Login</Link>
-            <Link to="/register" id="nav-register" className="nav-link">Register</Link>
+            <Link to="/login" id="nav-login" className="nav-link">{translations[lang]?.login || 'Login'}</Link>
+            <Link to="/register" id="nav-register" className="nav-link">{translations[lang]?.register || 'Register'}</Link>
           </div>
         )}
       </div>
@@ -1154,6 +1165,7 @@ class ErrorBoundary extends React.Component {
 function App() {
   const [user, setUser] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'en');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -1162,6 +1174,11 @@ function App() {
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  const changeLang = (newLang) => {
+    setLang(newLang);
+    localStorage.setItem('lang', newLang);
   };
 
   // Auto login from localstorage if token exists
@@ -1187,7 +1204,7 @@ function App() {
   return (
     <Router>
       <div className="app-wrapper">
-        <Navigation user={user} onLogout={handleLogout} theme={theme} onToggleTheme={toggleTheme} />
+        <Navigation user={user} onLogout={handleLogout} theme={theme} onToggleTheme={toggleTheme} lang={lang} onChangeLang={changeLang} />
         <main className="app-content">
           <ErrorBoundary>
             <Routes>

@@ -1,7 +1,7 @@
 # 🛡️ SafeTour AI — Progress Checkpoint
 
 > **Last Updated:** 2026-08-12  
-> **Overall Completion: 95%**  
+> **Overall Completion: 96%**  
 > **App Status:** Backend fully functional (mock DB mode) | Frontend fully functional  
 > **Server:** `http://localhost:5000` | **Client:** `http://localhost:5173`
 
@@ -14,9 +14,9 @@
 | Backend / API | 25 | 26 | **96%** |
 | Frontend / UI | 22 | 22 | **100%** |
 | Core Features (PRD) | 4 | 4 | **100%** |
-| Nice-to-Have Features | 3 | 5 | **60%** |
+| Nice-to-Have Features | 4 | 5 | **80%** |
 | Testing / QA | 3 | 3 | **100%** |
-| **Overall** | **52** | **55** | **~95%** |
+| **Overall** | **53** | **55** | **~96%** |
 
 ---
 
@@ -199,7 +199,7 @@
 
 ### 🟢 Low Priority (Optional Enhancements)
 
-- [ ] **Multi-language toggle** — i18n support (English/French/Spanish at minimum)
+- [x] **Multi-language toggle** — Internationalization (i18n) selector supporting EN, FR, and ES languages
 - [ ] **Trip itinerary upload** — Accept start/end location + planned route, render on map
 - [ ] **Push notification simulation** — In-app toast notifications for new incidents
 - [ ] **Export incidents to CSV** — Admin download button
@@ -232,7 +232,7 @@
 | AI Risk Scoring | ✅ Live risk badge | ✅ GET /ai/risk-score/:userId | **Done** |
 | AI Simulator Controls | ✅ 3 scenario buttons | ✅ Via /location/update | **Done** |
 | Analytics Dashboard | ✅ 4-card analytics metrics row | ✅ GET /incidents & GET /location/live data | **Done** |
-| Multi-language Toggle | ❌ Not built | N/A | **Missing** |
+| Multi-language Toggle | ✅ EN / FR / ES Navbar selector & persistent storage | N/A | **Done** |
 | Trip Itinerary Upload | ❌ Not built | ❌ No route endpoint | **Missing** |
 | Admin Incident Notes | ✅ Prompt input & note display | ✅ PATCH /incidents/:id/status notes support | **Done** |
 | Theme Toggle | ✅ Navbar toggle button & persistent storage | N/A | **Done** |
@@ -263,7 +263,8 @@
 | 2026-08-12 | Added Admin Operational Response Notes to incident dispatch & tourist alert broadcast | ✅ |
 | 2026-08-12 | Added Command Room Analytics Stats Row (Resolution Clearance Rate, SOS Alarms, Active Boundaries) | ✅ |
 | 2026-08-12 | Added Dark/Light theme toggle with persistent localStorage theme state | ✅ |
-| **Next** | Add trip itinerary upload simulation & multi-language toggle | 🔲 |
+| 2026-08-12 | Added Multi-language (i18n) selector supporting English, French, and Spanish | ✅ |
+| **Next** | Add trip itinerary upload simulation & export incidents CSV | 🔲 |
 
 ---
 
