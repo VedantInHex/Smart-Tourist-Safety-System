@@ -1,7 +1,7 @@
 # 🛡️ SafeTour AI — Progress Checkpoint
 
 > **Last Updated:** 2026-08-12  
-> **Overall Completion: 90%**  
+> **Overall Completion: 93%**  
 > **App Status:** Backend fully functional (mock DB mode) | Frontend fully functional  
 > **Server:** `http://localhost:5000` | **Client:** `http://localhost:5173`
 
@@ -12,11 +12,11 @@
 | Area | Done | Total Items | % |
 |---|---|---|---|
 | Backend / API | 25 | 26 | **96%** |
-| Frontend / UI | 20 | 22 | **91%** |
+| Frontend / UI | 21 | 22 | **95%** |
 | Core Features (PRD) | 4 | 4 | **100%** |
-| Nice-to-Have Features | 1 | 5 | **20%** |
+| Nice-to-Have Features | 2 | 5 | **40%** |
 | Testing / QA | 3 | 3 | **100%** |
-| **Overall** | **49** | **55** | **~90%** |
+| **Overall** | **51** | **55** | **~93%** |
 
 ---
 
@@ -194,7 +194,7 @@
 ### 🟡 Medium Priority (Nice-to-Have from PRD)
 
 - [x] **Admin incident notes** — Text input for admin to add response notes per incident & broadcast to user
-- [ ] **Analytics widget** — Charts showing totals: tourists monitored, alerts triggered, incidents resolved
+- [x] **Analytics widget** — Statistics command cards: tourists monitored, active geofences, open SOS, resolution clearance rate
 - [ ] **Dark/Light theme toggle** — CSS variable swap with toggle button in nav
 
 ### 🟢 Low Priority (Optional Enhancements)
@@ -231,7 +231,7 @@
 | Tourist Incident Tracker | ✅ My Incident Tracker card | ✅ GET /incidents/my | **Done** |
 | AI Risk Scoring | ✅ Live risk badge | ✅ GET /ai/risk-score/:userId | **Done** |
 | AI Simulator Controls | ✅ 3 scenario buttons | ✅ Via /location/update | **Done** |
-| Analytics Dashboard | ❌ Not built | ❌ No stats endpoint | **Missing** |
+| Analytics Dashboard | ✅ 4-card analytics metrics row | ✅ GET /incidents & GET /location/live data | **Done** |
 | Multi-language Toggle | ❌ Not built | N/A | **Missing** |
 | Trip Itinerary Upload | ❌ Not built | ❌ No route endpoint | **Missing** |
 | Admin Incident Notes | ✅ Prompt input & note display | ✅ PATCH /incidents/:id/status notes support | **Done** |
@@ -261,7 +261,8 @@
 | 2026-08-12 | Added Tourist Incident Tracker panel (frontend UI + GET /api/incidents/my endpoint) | ✅ |
 | 2026-08-12 | Added React ErrorBoundary, form validation, and button loading spinners | ✅ |
 | 2026-08-12 | Added Admin Operational Response Notes to incident dispatch & tourist alert broadcast | ✅ |
-| **Next** | Add analytics widget on admin dashboard | 🔲 |
+| 2026-08-12 | Added Command Room Analytics Stats Row (Resolution Clearance Rate, SOS Alarms, Active Boundaries) | ✅ |
+| **Next** | Add theme toggle (Dark/Light) | 🔲 |
 
 ---
 

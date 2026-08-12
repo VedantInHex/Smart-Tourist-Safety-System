@@ -812,8 +812,8 @@ function AdminDashboard({ user }) {
         </div>
       </header>
 
-      {/* Stats row */}
-      <div className="dashboard-grid admin-stats">
+      {/* Stats & Analytics Command Row */}
+      <div className="dashboard-grid admin-stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         <div className="dash-card stat-card">
           <h4>Monitored Tourists</h4>
           <p className="stat-val">{tourists.length}</p>
@@ -826,10 +826,19 @@ function AdminDashboard({ user }) {
         </div>
         <div className="dash-card stat-card">
           <h4>Pending SOS Alarms</h4>
-          <p className="stat-val text-orange">
+          <p className="stat-val text-red">
             {incidents.filter(i => i.status !== 'Resolved' && i.type === 'sos').length}
           </p>
           <span className="stat-change text-red">Awaiting dispatch teams</span>
+        </div>
+        <div className="dash-card stat-card">
+          <h4>Resolved Incidents</h4>
+          <p className="stat-val text-green">
+            {incidents.filter(i => i.status === 'Resolved').length}
+          </p>
+          <span className="stat-change text-green">
+            {incidents.length > 0 ? `${Math.round((incidents.filter(i => i.status === 'Resolved').length / incidents.length) * 100)}% Clearance Rate` : 'No incidents logged'}
+          </span>
         </div>
       </div>
 
