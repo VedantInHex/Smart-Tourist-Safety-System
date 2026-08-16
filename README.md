@@ -1,18 +1,82 @@
-# Smart-Tourist-Safety-System
+# SafeTour AI 🛡️
 
-## HTTPS and real mobile GPS
+> A smart tourist safety and emergency-response platform built to help tourists stay safe and help authorities respond faster.
 
-Browser geolocation works on `localhost` during development, but a phone opening a deployed site requires HTTPS. The recommended production setup is TLS termination at Nginx:
+## Problem
 
-1. Build and run the app: `npm run build` then `npm run start:prod`.
-2. Replace `example.com` in [the Nginx config](deployment/nginx/tourist-safety-system.conf) with your domain and install it as an enabled Nginx site.
-3. Obtain a trusted certificate, for example with Certbot: `sudo certbot --nginx -d your-domain.com -d www.your-domain.com`.
-4. Open `https://your-domain.com` on the phone, then approve the browser's location permission.
+Tourists traveling in unfamiliar places may face emergencies, unsafe zones, or communication delays. During an incident, responders often need the tourist’s exact location, identity, emergency context, and travel route immediately.
 
-Nginx proxies both the web app and `/api` through the same HTTPS domain, which avoids mixed-content and cross-origin GPS/API problems.
+SafeTour AI brings these safety workflows into one platform.
 
-### Direct Node HTTPS (optional)
+## Solution
 
-If a reverse proxy is not available, copy `server/.env.example` to `server/.env` and set `HTTPS_ENABLED=true`, `HTTPS_PORT`, `HTTPS_KEY_PATH`, and `HTTPS_CERT_PATH` to a trusted certificate/key pair. Then start with `npm run start:prod`.
+SafeTour AI connects tourists and authorities through real-time GPS tracking, SOS alerts, geofencing, digital identity verification, and incident management.
 
-Do not use self-signed certificates for phone testing: mobile browsers will reject or warn about them, and location access may remain blocked.
+A tourist can share their live location, receive alerts when entering danger zones, plan a trip, and trigger an SOS request. Authorities can monitor active tourists, manage incidents, draw risk zones, and verify digital IDs from a central dashboard.
+
+## Features
+
+### Tourist Dashboard
+
+- Real-time GPS location tracking
+- Interactive live map using Leaflet
+- Continuous live GPS tracking
+- One-tap SOS emergency button
+- Geofence alerts when entering high- or medium-risk zones
+- Safety-risk score based on:
+  - Risk-zone entry
+  - Inactivity
+  - Repeated immobility
+  - Lost location signals
+- QR-based digital tourist ID
+- Trip itinerary planning and route visualization
+- Safety alerts and personal incident tracker
+- Multi-language support
+- Light and dark themes
+
+### Authority Dashboard
+
+- Live tourist-location command map
+- SOS and geofence incident monitoring
+- Draw and manage polygon-based danger zones
+- Assign Low, Medium, or High risk levels to geofences
+- Dispatch, update, and resolve incidents
+- Add response notes to incidents
+- Export incidents as CSV reports
+- Verify QR-based tourist identities
+- Hash-linked identity-ledger audit
+- Tamper-detection demonstration for digital identity records
+
+## Technology Stack
+
+| Category | Technology |
+| --- | --- |
+| Frontend | React, Vite, React Router |
+| Maps | Leaflet, React Leaflet |
+| Backend | Node.js, Express |
+| Database | PostgreSQL |
+| Authentication | JWT, bcrypt |
+| API Communication | Axios |
+| Digital Identity | QR codes, SHA-256 hash-linked records |
+| Deployment | Vercel frontend + Render/Node backend |
+
+## DEMO ACCOUNTS
+
+Tourist account
+Email: tourist@safetour.com
+Password: tourist123
+
+Admin account
+Email: admin@safetour.com
+Password: admin123
+
+
+## Project Structure
+
+```text
+tourist-safety-system/
+├── client/                 # React + Vite frontend
+├── server/                 # Express API and database logic
+├── deployment/             # HTTPS/Nginx deployment configuration
+└── README.md
+
