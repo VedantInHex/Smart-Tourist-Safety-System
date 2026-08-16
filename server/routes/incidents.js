@@ -5,13 +5,19 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 // Create SOS Incident
 router.post('/sos', requireAuth, async (req, res) => {
   const { user_id, latitude, longitude } = req.body;
+  const userId = Number(user_id);
+  const lat = Number(latitude);
+  const lng = Number(longitude);
 
-  if (!user_id || latitude === undefined || longitude === undefined) {
+  if (!Number.isInteger(userId) || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     return res.status(400).json({ error: "Missing required fields: user_id, latitude, longitude" });
+  }
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return res.status(400).json({ error: "Invalid coordinates. Latitude must be between -90 and 90, and longitude between -180 and 180." });
   }
 
   // Ensure tourists can only raise SOS for themselves
-  if (req.user.role !== 'admin' && req.user.id !== parseInt(user_id)) {
+  if (req.user.role !== 'admin' && req.user.id !== userId) {
     return res.status(403).json({ error: "Access denied. Can only trigger SOS for yourself." });
   }
 
@@ -20,7 +26,7 @@ router.post('/sos', requireAuth, async (req, res) => {
     const incResult = await db.query(
       `INSERT INTO incidents (user_id, type, latitude, longitude, status, ai_risk_score, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [user_id, 'sos', latitude, longitude, 'Open', 'Critical', new Date()]
+      [userId, 'sos', lat, lng, 'Open', 'Critical', new Date()]
     );
 
     const newIncident = incResult.rows[0];
@@ -30,7 +36,7 @@ router.post('/sos', requireAuth, async (req, res) => {
     await db.query(
       `INSERT INTO alerts (user_id, incident_id, message, sent_at)
        VALUES ($1, $2, $3, $4)`,
-      [user_id, newIncident.id, alertMsg, new Date()]
+      [userId, newIncident.id, alertMsg, new Date()]
     );
 
     res.status(201).json({

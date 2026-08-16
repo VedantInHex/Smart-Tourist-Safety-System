@@ -45,24 +45,33 @@ function checkGeofence(lat, lng, polygonGeoJSON) {
 // Update Tourist Location & Check Geofences
 router.post('/update', requireAuth, async (req, res) => {
   const { user_id, latitude, longitude, timestamp } = req.body;
+  const userId = Number(user_id);
+  const lat = Number(latitude);
+  const lng = Number(longitude);
 
-  if (!user_id || latitude === undefined || longitude === undefined) {
+  if (!Number.isInteger(userId) || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     return res.status(400).json({ error: "Missing required fields: user_id, latitude, longitude" });
+  }
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return res.status(400).json({ error: "Invalid coordinates. Latitude must be between -90 and 90, and longitude between -180 and 180." });
   }
 
   // Enforce that tourists can only update their own location
-  if (req.user.role !== 'admin' && req.user.id !== parseInt(user_id)) {
+  if (req.user.role !== 'admin' && req.user.id !== userId) {
     return res.status(403).json({ error: "Access denied. Can only update your own location." });
   }
 
   try {
     const locTimestamp = timestamp ? new Date(timestamp) : new Date();
+    if (Number.isNaN(locTimestamp.getTime())) {
+      return res.status(400).json({ error: "Invalid timestamp." });
+    }
 
     // 1. Save new location
     const insertLoc = await db.query(
       `INSERT INTO locations (user_id, latitude, longitude, timestamp)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [user_id, latitude, longitude, locTimestamp]
+      [userId, lat, lng, locTimestamp]
     );
 
     // 2. Fetch all defined risk zones to run geofencing
@@ -77,7 +86,7 @@ router.post('/update', requireAuth, async (req, res) => {
         } catch (e) {}
       }
 
-      const isInside = checkGeofence(latitude, longitude, geojson);
+      const isInside = checkGeofence(lat, lng, geojson);
       if (isInside) {
         triggeredZones.push(zone);
 
@@ -88,14 +97,14 @@ router.post('/update', requireAuth, async (req, res) => {
             `SELECT * FROM incidents 
              WHERE user_id = $1 AND type = $2 AND status != 'Resolved' AND ai_risk_score = $3 
              LIMIT 1`,
-            [user_id, 'geofence', zone.risk_level]
+            [userId, 'geofence', zone.risk_level]
           );
 
           if (activeIncidentCheck.rows.length === 0) {
             const incResult = await db.query(
               `INSERT INTO incidents (user_id, type, latitude, longitude, status, ai_risk_score, created_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-              [user_id, 'geofence', latitude, longitude, 'Open', zone.risk_level, new Date()]
+              [userId, 'geofence', lat, lng, 'Open', zone.risk_level, new Date()]
             );
             
             const newIncident = incResult.rows[0];
@@ -105,7 +114,7 @@ router.post('/update', requireAuth, async (req, res) => {
             await db.query(
               `INSERT INTO alerts (user_id, incident_id, message, sent_at)
                VALUES ($1, $2, $3, $4)`,
-              [user_id, newIncident.id, alertMsg, new Date()]
+              [userId, newIncident.id, alertMsg, new Date()]
             );
           }
         }

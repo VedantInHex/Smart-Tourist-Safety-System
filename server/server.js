@@ -1,10 +1,15 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const https = require('https');
+const path = require('path');
 const db = require('./db');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const HTTPS_ENABLED = process.env.HTTPS_ENABLED === 'true';
+const HTTPS_PORT = Number(process.env.HTTPS_PORT || 443);
 
 // Middleware
 app.use(cors());
@@ -33,8 +38,6 @@ app.get('/health', (req, res) => {
 });
 
 // Serve client static assets if production build exists
-const path = require('path');
-const fs = require('fs');
 const clientDistPath = path.join(__dirname, '../client/dist');
 if (fs.existsSync(clientDistPath)) {
   console.log(`Serving static client files from: ${clientDistPath}`);
@@ -51,8 +54,27 @@ if (fs.existsSync(clientDistPath)) {
 // Initialize DB and Start Server
 async function startServer() {
   await db.initDb();
+
+  if (HTTPS_ENABLED) {
+    const keyPath = process.env.HTTPS_KEY_PATH;
+    const certPath = process.env.HTTPS_CERT_PATH;
+    if (!keyPath || !certPath) {
+      throw new Error('HTTPS is enabled, but HTTPS_KEY_PATH and HTTPS_CERT_PATH must both be set.');
+    }
+
+    const httpsOptions = {
+      key: fs.readFileSync(path.resolve(__dirname, keyPath)),
+      cert: fs.readFileSync(path.resolve(__dirname, certPath))
+    };
+
+    https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
+      console.log(`HTTPS server is running on port ${HTTPS_PORT}`);
+    });
+    return;
+  }
+
   app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`HTTP server is running on port ${PORT}. Use HTTPS_ENABLED=true for direct TLS deployment.`);
   });
 }
 

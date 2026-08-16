@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 let usePostgres = false;
 let pool = null;
@@ -15,6 +17,66 @@ let localDb = {
   alerts: [],
   itineraries: []
 };
+
+// Standard predefined hazard zones across India & International
+const DEFAULT_RISK_ZONES = [
+  {
+    name: "Goa Baga Beach High-Tide & Rip Current Zone (Goa, India)",
+    polygon_geojson: JSON.stringify({
+      type: "Polygon",
+      coordinates: [[
+        [73.7450, 15.5600],
+        [73.7600, 15.5600],
+        [73.7600, 15.5450],
+        [73.7450, 15.5450],
+        [73.7450, 15.5600]
+      ]]
+    }),
+    risk_level: "High"
+  },
+  {
+    name: "Rohtang Pass Avalanche & Landslide Danger Area (Manali, India)",
+    polygon_geojson: JSON.stringify({
+      type: "Polygon",
+      coordinates: [[
+        [77.2300, 32.3850],
+        [77.2600, 32.3850],
+        [77.2600, 32.3600],
+        [77.2300, 32.3600],
+        [77.2300, 32.3850]
+      ]]
+    }),
+    risk_level: "High"
+  },
+  {
+    name: "Connaught Place Red Zone High-Congestion Safety Perimeter (New Delhi, India)",
+    polygon_geojson: JSON.stringify({
+      type: "Polygon",
+      coordinates: [[
+        [77.2100, 28.6380],
+        [77.2250, 28.6380],
+        [77.2250, 28.6250],
+        [77.2100, 28.6250],
+        [77.2100, 28.6380]
+      ]]
+    }),
+    risk_level: "Medium"
+  },
+  {
+    name: "Geneva Lake Jetty Hazard Zone (Geneva, Switzerland)",
+    polygon_geojson: JSON.stringify({
+      type: "Polygon",
+      coordinates: [[
+        [6.1510, 46.2100],
+        [6.1580, 46.2100],
+        [6.1580, 46.2050],
+        [6.1510, 46.2050],
+        [6.1510, 46.2100]
+      ]]
+    }),
+    risk_level: "High"
+  }
+];
 
 function loadLocalDb() {
   try {
@@ -38,9 +100,6 @@ function saveLocalDb() {
 function seedLocalDb() {
   if (localDb.users.length === 0) {
     console.log("Seeding mock database...");
-    const bcrypt = require('bcrypt');
-    const crypto = require('crypto');
-
     const adminPassword = bcrypt.hashSync('admin123', 10);
     const touristPassword = bcrypt.hashSync('tourist123', 10);
 
@@ -48,9 +107,9 @@ function seedLocalDb() {
       id: 1,
       name: "Cmdr. Alice Miller",
       id_proof_number: "ADM-99801",
-      phone: "+41 22 730 0111",
+      phone: "+91 98765 43210",
       email: "admin@safetour.com",
-      emergency_contact: "Internal Dispatch",
+      emergency_contact: "Search & Rescue National Command",
       role: "admin",
       password: adminPassword,
       created_at: new Date()
@@ -60,9 +119,9 @@ function seedLocalDb() {
       id: 2,
       name: "Marcus Aurelius",
       id_proof_number: "PASSPORT-XM889",
-      phone: "+39 06 6982",
+      phone: "+91 98111 22334",
       email: "tourist@safetour.com",
-      emergency_contact: "Sophia Aurelius (+39 06 6983)",
+      emergency_contact: "Sophia Aurelius (+91 98111 22335)",
       role: "tourist",
       password: touristPassword,
       created_at: new Date()
@@ -70,29 +129,22 @@ function seedLocalDb() {
 
     localDb.users.push(admin, tourist);
 
-    const geofence = {
-      id: 1,
-      name: "Geneva Lake Jetty Hazard Zone",
-      polygon_geojson: JSON.stringify({
-        type: "Polygon",
-        coordinates: [[
-          [6.151, 46.210],
-          [6.158, 46.210],
-          [6.158, 46.205],
-          [6.151, 46.205],
-          [6.151, 46.210]
-        ]]
-      }),
-      risk_level: "High",
-      created_by: 1
-    };
-    localDb.risk_zones.push(geofence);
+    // Seed default risk zones
+    DEFAULT_RISK_ZONES.forEach((zone, idx) => {
+      localDb.risk_zones.push({
+        id: idx + 1,
+        name: zone.name,
+        polygon_geojson: zone.polygon_geojson,
+        risk_level: zone.risk_level,
+        created_by: 1
+      });
+    });
 
     const loc = {
       id: 1,
       user_id: 2,
-      latitude: 46.2023,
-      longitude: 6.1432,
+      latitude: 28.6139,
+      longitude: 77.2090,
       timestamp: new Date()
     };
     localDb.locations.push(loc);
@@ -101,10 +153,11 @@ function seedLocalDb() {
       id: 1,
       user_id: 2,
       type: "geofence",
-      latitude: 46.208,
-      longitude: 6.153,
+      latitude: 28.6300,
+      longitude: 77.2180,
       status: "Resolved",
-      ai_risk_score: "High",
+      ai_risk_score: "Medium",
+      notes: "Tourist verified safe outside perimeter.",
       created_at: new Date(Date.now() - 3600000),
       resolved_at: new Date(Date.now() - 1800000)
     };
@@ -114,7 +167,7 @@ function seedLocalDb() {
       id: 1,
       user_id: 2,
       incident_id: 1,
-      message: "User entered danger geofence zone: \"Geneva Lake Jetty Hazard Zone\" (High Risk)",
+      message: "User entered safety zone: \"Connaught Place Red Zone High-Congestion Safety Perimeter\" (Medium Risk)",
       sent_at: new Date(Date.now() - 3600000)
     };
     localDb.alerts.push(alert);
@@ -124,7 +177,6 @@ function seedLocalDb() {
     const validUntil = new Date();
     validUntil.setFullYear(validUntil.getFullYear() + 1);
 
-    // Must match calculateHash() in blockchain.js exactly
     const dataStr = JSON.stringify({
       userId: tourist.id,
       name: tourist.name,
@@ -148,13 +200,13 @@ function seedLocalDb() {
     const itinerary = {
       id: 1,
       user_id: 2,
-      title: "Geneva City & Lakeside Safety Route",
-      start_location: "Geneva Central Station (Gare Cornavin)",
-      destination: "Jet d'Eau Scenic Pier",
+      title: "Delhi Heritage & Safety Exploration Route",
+      start_location: "India Gate Central Circle",
+      destination: "Connaught Place Inner Circle",
       waypoints: JSON.stringify([
-        [6.1432, 46.2023],
-        [6.1480, 46.2050],
-        [6.1530, 46.2070]
+        [77.2295, 28.6129],
+        [77.2200, 28.6250],
+        [77.2167, 28.6328]
       ]),
       start_date: new Date(),
       end_date: new Date(Date.now() + 7 * 86400000),
@@ -179,7 +231,7 @@ async function initDb() {
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
       port: parseInt(process.env.DB_PORT) || 5432,
-      connectionTimeoutMillis: 3000
+      connectionTimeoutMillis: 5000
     });
 
     try {
@@ -188,6 +240,7 @@ async function initDb() {
       usePostgres = true;
       console.log("Successfully connected to PostgreSQL Database!");
       await runMigrations();
+      await seedPostgresDb();
     } catch (err) {
       console.warn("PostgreSQL connection failed. Falling back to simulated in-memory/JSON database.", err.message);
       usePostgres = false;
@@ -228,7 +281,7 @@ async function runMigrations() {
     );`,
     `CREATE TABLE IF NOT EXISTS risk_zones (
       id SERIAL PRIMARY KEY,
-      name VARCHAR(100) NOT NULL,
+      name VARCHAR(150) NOT NULL,
       polygon_geojson TEXT NOT NULL,
       risk_level VARCHAR(20) NOT NULL,
       created_by INTEGER REFERENCES users(id)
@@ -241,9 +294,11 @@ async function runMigrations() {
       longitude DOUBLE PRECISION NOT NULL,
       status VARCHAR(20) NOT NULL DEFAULT 'Open',
       ai_risk_score VARCHAR(20) NOT NULL,
+      notes TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       resolved_at TIMESTAMP
     );`,
+    `ALTER TABLE incidents ADD COLUMN IF NOT EXISTS notes TEXT;`,
     `CREATE TABLE IF NOT EXISTS alerts (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -266,7 +321,116 @@ async function runMigrations() {
   ];
 
   for (let q of queries) {
-    await pool.query(q);
+    try {
+      await pool.query(q);
+    } catch (e) {
+      console.warn("Migration warning for query:", q.slice(0, 40), e.message);
+    }
+  }
+}
+
+async function seedPostgresDb() {
+  try {
+    const adminRes = await pool.query("SELECT * FROM users WHERE email = 'admin@safetour.com'");
+    let adminId = null;
+    if (adminRes.rows.length === 0) {
+      const adminPass = bcrypt.hashSync('admin123', 10);
+      const insertedAdmin = await pool.query(
+        `INSERT INTO users (name, id_proof_number, phone, email, emergency_contact, role, password)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        ["Cmdr. Alice Miller", "ADM-99801", "+91 98765 43210", "admin@safetour.com", "Search & Rescue National Command", "admin", adminPass]
+      );
+      adminId = insertedAdmin.rows[0].id;
+    } else {
+      adminId = adminRes.rows[0].id;
+    }
+
+    const touristRes = await pool.query("SELECT * FROM users WHERE email = 'tourist@safetour.com'");
+    let touristId = null;
+    if (touristRes.rows.length === 0) {
+      const touristPass = bcrypt.hashSync('tourist123', 10);
+      const insertedTourist = await pool.query(
+        `INSERT INTO users (name, id_proof_number, phone, email, emergency_contact, role, password)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, email, id_proof_number`,
+        ["Marcus Aurelius", "PASSPORT-XM889", "+91 98111 22334", "tourist@safetour.com", "Sophia Aurelius (+91 98111 22335)", "tourist", touristPass]
+      );
+      const tUser = insertedTourist.rows[0];
+      touristId = tUser.id;
+
+      // Seed digital ID
+      const GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000";
+      const issuedAt = new Date();
+      const validUntil = new Date();
+      validUntil.setFullYear(validUntil.getFullYear() + 1);
+
+      const dataStr = JSON.stringify({
+        userId: tUser.id,
+        name: tUser.name,
+        email: tUser.email,
+        idProof: tUser.id_proof_number
+      });
+      
+      const payload = `${dataStr}_${issuedAt.toISOString()}_${validUntil.toISOString()}_${GENESIS_HASH}`;
+      const idHash = crypto.createHash('sha256').update(payload).digest('hex');
+
+      await pool.query(
+        `INSERT INTO digital_ids (user_id, id_hash, previous_hash, issued_at, valid_until)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [tUser.id, idHash, GENESIS_HASH, issuedAt, validUntil]
+      );
+
+      // Seed default location
+      await pool.query(
+        `INSERT INTO locations (user_id, latitude, longitude, timestamp)
+         VALUES ($1, $2, $3, $4)`,
+        [tUser.id, 28.6139, 77.2090, new Date()]
+      );
+    } else {
+      touristId = touristRes.rows[0].id;
+    }
+
+    // Seed risk zones if none exist
+    const zonesCheck = await pool.query('SELECT count(*) FROM risk_zones');
+    if (parseInt(zonesCheck.rows[0].count) === 0) {
+      for (let rz of DEFAULT_RISK_ZONES) {
+        await pool.query(
+          `INSERT INTO risk_zones (name, polygon_geojson, risk_level, created_by)
+           VALUES ($1, $2, $3, $4)`,
+          [rz.name, rz.polygon_geojson, rz.risk_level, adminId]
+        );
+      }
+    }
+
+    // Ensure all existing blocks form an unbroken SHA-256 chain
+    const blocksRes = await pool.query('SELECT * FROM digital_ids ORDER BY id ASC');
+    const usersRes = await pool.query("SELECT * FROM users WHERE role = 'tourist'");
+    const GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000";
+
+    let lastHash = GENESIS_HASH;
+    for (let i = 0; i < blocksRes.rows.length; i++) {
+      const b = blocksRes.rows[i];
+      const u = usersRes.rows.find(user => user.id === b.user_id);
+      if (!u) continue;
+
+      const dataStr = JSON.stringify({
+        userId: u.id,
+        name: u.name,
+        email: u.email,
+        idProof: u.id_proof_number
+      });
+      const payload = `${dataStr}_${new Date(b.issued_at).toISOString()}_${new Date(b.valid_until).toISOString()}_${lastHash}`;
+      const correctHash = crypto.createHash('sha256').update(payload).digest('hex');
+
+      if (b.previous_hash !== lastHash || b.id_hash !== correctHash) {
+        await pool.query(
+          'UPDATE digital_ids SET previous_hash = $1, id_hash = $2 WHERE id = $3',
+          [lastHash, correctHash, b.id]
+        );
+      }
+      lastHash = correctHash;
+    }
+  } catch (err) {
+    console.error("Postgres Seeding Error:", err);
   }
 }
 
@@ -546,16 +710,24 @@ let originalUserData = {};
 
 async function tamperUser(userId) {
   if (usePostgres) {
-    const res = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    let res = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (res.rows.length === 0) {
+      // Find first tourist
+      res = await pool.query("SELECT * FROM users WHERE role = 'tourist' LIMIT 1");
+    }
     if (res.rows.length > 0) {
       const user = res.rows[0];
-      originalUserData[userId] = { name: user.name, id_proof_number: user.id_proof_number };
-      await pool.query("UPDATE users SET name = $1, id_proof_number = $2 WHERE id = $3", [user.name + " (Tampered)", "COMPROMISED-999", userId]);
+      const targetId = user.id;
+      originalUserData[targetId] = { name: user.name, id_proof_number: user.id_proof_number };
+      await pool.query("UPDATE users SET name = $1, id_proof_number = $2 WHERE id = $3", [user.name + " (Tampered)", "COMPROMISED-999", targetId]);
     }
   } else {
-    const user = localDb.users.find(u => u.id === userId);
+    let user = localDb.users.find(u => u.id === userId);
+    if (!user) {
+      user = localDb.users.find(u => u.role === 'tourist');
+    }
     if (user) {
-      originalUserData[userId] = { name: user.name, id_proof_number: user.id_proof_number };
+      originalUserData[user.id] = { name: user.name, id_proof_number: user.id_proof_number };
       user.name = user.name + " (Tampered)";
       user.id_proof_number = "COMPROMISED-999";
       saveLocalDb();
@@ -564,12 +736,24 @@ async function tamperUser(userId) {
 }
 
 async function restoreUser(userId) {
-  const original = originalUserData[userId] || { name: "Marcus Aurelius", id_proof_number: "PASSPORT-XM889" };
   if (usePostgres) {
-    await pool.query("UPDATE users SET name = $1, id_proof_number = $2 WHERE id = $3", [original.name, original.id_proof_number, userId]);
+    let res = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (res.rows.length === 0) {
+      res = await pool.query("SELECT * FROM users WHERE role = 'tourist' LIMIT 1");
+    }
+    if (res.rows.length > 0) {
+      const user = res.rows[0];
+      const targetId = user.id;
+      const original = originalUserData[targetId] || { name: "Marcus Aurelius", id_proof_number: "PASSPORT-XM889" };
+      await pool.query("UPDATE users SET name = $1, id_proof_number = $2 WHERE id = $3", [original.name, original.id_proof_number, targetId]);
+    }
   } else {
-    const user = localDb.users.find(u => u.id === userId);
+    let user = localDb.users.find(u => u.id === userId);
+    if (!user) {
+      user = localDb.users.find(u => u.role === 'tourist');
+    }
     if (user) {
+      const original = originalUserData[user.id] || { name: "Marcus Aurelius", id_proof_number: "PASSPORT-XM889" };
       user.name = original.name;
       user.id_proof_number = original.id_proof_number;
       saveLocalDb();

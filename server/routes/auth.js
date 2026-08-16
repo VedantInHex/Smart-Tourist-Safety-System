@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 const db = require('../db');
 const { calculateHash, GENESIS_HASH } = require('../blockchain');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
 
@@ -157,7 +158,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Test endpoint to simulate DB Tampering
-router.post('/test/tamper', async (req, res) => {
+router.post('/test/tamper', requireAuth, requireAdmin, async (req, res) => {
   const userId = req.body.userId || 2; // Default to Marcus
   try {
     await db.tamperUser(userId);
@@ -169,7 +170,7 @@ router.post('/test/tamper', async (req, res) => {
 });
 
 // Test endpoint to restore DB integrity
-router.post('/test/restore', async (req, res) => {
+router.post('/test/restore', requireAuth, requireAdmin, async (req, res) => {
   const userId = req.body.userId || 2; // Default to Marcus
   try {
     await db.restoreUser(userId);
